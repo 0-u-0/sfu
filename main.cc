@@ -12,8 +12,13 @@ int main(int, char **) {
   };
 
   server_transport->request_callback_ =
-      [server_transport](int id, std::string method, json params) {
+      [server_transport](int id, std::string method, json data) {
         cout << "get request " << method << endl;
+        json response;
+        if (method == "join") {
+          response["codec"] = json::object();
+          server_transport->Response(id, response);
+        }
       };
 
   server_transport->Init(8800);

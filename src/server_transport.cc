@@ -1,6 +1,7 @@
 
 #include "server_transport.h"
 
+#include <cstdio>
 #include <iostream>
 
 using websocketpp::lib::bind;
@@ -23,8 +24,7 @@ void ServerTransport::Response(int id, json data) {
 
   requestMes["id"] = id;
   requestMes["data"] = data;
-  requestMes["response"] = true;
-  requestMes["ok"] = true;
+  requestMes["type"] = "response";
 
   const std::string mes = requestMes.dump();
 
@@ -87,30 +87,31 @@ void ServerTransport::Init(int port) {
           if (msg->get_opcode() == websocketpp::frame::opcode::text) {
             auto request_string = msg->get_payload();
             json request_json = json::parse(request_string);
-            json id_json = request_json["id"];
-            json method_json = request_json["method"];
-            json params = request_json["params"];
+            json type_json = request_json["type"];
 
-            int id = 0;
+            if (type_json.is_string()) {
+              std::string type = type_json.get<std::string>();
 
-            if (id_json.is_number_integer()) {
-              id = id_json.get<int>();
-            }
+              if (type == "request") {
+                json id_json = request_json["id"];
+                json method_json = request_json["method"];
+                json data = request_json["data"];
 
-            if (method_json.is_string() && params.is_object()) {
-              std::string method = method_json.get<std::string>();
+                if (id_json.is_number_integer() && method_json.is_string() &&
+                    data.is_object()) {
+                  int id = id_json.get<int>(); // TODO(CC): check id
 
-              if (id != 0) {
-                // request
-                if (request_callback_) {
-                  request_callback_(id, method, params);
+                  std::string method = method_json.get<std::string>();
+
+                  if (request_callback_) {
+                    request_callback_(id, method, data);
+                  }
                 }
-              }else {
-                //notify
               }
-            }
 
-            
+            } else {
+              // TODO(CC): error
+            }
           }
         },
         server_, ::_1, ::_2));
