@@ -32,7 +32,7 @@ void UdpTransport::OnUdpPacket(rtc::AsyncPacketSocket* socket,
                                const int64_t& timestamp) {
   ELOG_DEBUG("Get data from %s", addr.ToString().c_str());
   if (data_callback_ != nullptr) {
-    data_callback_(data, size);
+    data_callback_(data, size, addr);
   }
 }
 
@@ -48,4 +48,18 @@ void UdpTransport::SendPacket(const uint8_t* data, size_t size) {
           }
         }));
   }
+}
+
+void UdpTransport::SendTo(const uint8_t* data,
+                          size_t size,
+                          const rtc::SocketAddress& addr) {
+  std::vector<uint8_t> packet_copy(data, data + size);
+
+  thread_->PostTask(webrtc::ToQueuedTask(
+      [this, addr, packet_copy2 = std::move(packet_copy)]() {
+        if (!rtp_socket_->SendTo(packet_copy2.data(), packet_copy2.size(), addr,
+                                 rtc::PacketOptions())) {
+          ELOG_WARN("Send failed");
+        }
+      }));
 }

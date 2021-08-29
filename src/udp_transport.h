@@ -9,18 +9,20 @@
 
 #include "logger.h"
 
-using UdpDataCallback = std::function<void(const char* data, size_t len)>;
+using UdpDataCallback = std::function<
+    void(const char* data, size_t len, const rtc::SocketAddress& addr)>;
 
 class UdpTransport : public sigslot::has_slots<> {
   DECLARE_LOGGER();
 
  public:
-  UdpTransport(const std::string& ip,const int port);
+  UdpTransport(const std::string& ip, const int port);
 
   void Init();
   void SetRemoteAddress(const std::string& ip, int port);
 
   void SendPacket(const uint8_t* data, size_t size);
+  void SendTo(const uint8_t* data, size_t size, const rtc::SocketAddress& addr);
   void OnUdpPacket(rtc::AsyncPacketSocket* socket,
                    const char* data,
                    size_t size,
