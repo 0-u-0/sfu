@@ -114,6 +114,11 @@ DtlsTransport::DtlsTransport(IceTransport* ice_transport,
       srtp_ciphers_(crypto_options.GetSupportedDtlsSrtpCryptoSuites()),
       ssl_max_version_(max_version) {}
 
+void DtlsTransport::Init() {
+  ice_transport_->SignalReadPacket.connect(this, &DtlsTransport::OnPacket);
+  // ice_transport_->Init();
+}
+
 auto DtlsTransport::certificate_ = rtc::RTCCertificate::Create(
     rtc::SSLIdentity::Create("name_", rtc::KT_DEFAULT));
 
@@ -261,6 +266,8 @@ void DtlsTransport::OnDtlsHandshakeError(rtc::SSLHandshakeError error) {
 }
 
 void DtlsTransport::OnPacket(const char* data, size_t size) {
+  RTC_LOG(INFO) << "Dtls packet";
+
   switch (dtls_state()) {
     case DTLS_TRANSPORT_NEW:
       if (dtls_) {

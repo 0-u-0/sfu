@@ -1,14 +1,14 @@
 #ifndef SRC_ICE_TRANSPORT_H_
 #define SRC_ICE_TRANSPORT_H_
 
-#include "rtc_base/async_packet_socket.h"
+#include <rtc_base/third_party/sigslot/sigslot.h>
 
-class IceTransport {
+#include "udp_transport.h"
+
+class IceTransport : public sigslot::has_slots<> {
  public:
-
- 
-  bool writable() { return true; };
-
+  IceTransport(const std::string& ip, const int port);
+  void Init();
   // Attempts to send the given packet.
   // The return value is < 0 on failure. The return value in failure case is not
   // descriptive. Depending on failure cause and implementation details
@@ -17,10 +17,24 @@ class IceTransport {
   // TODO(johan): Reliable, meaningful, consistent error codes for all
   // implementations would be nice.
   // TODO(johan): Remove the default argument once channel code is updated.
-  virtual int SendPacket(const char* data,
-                         size_t len,
-                         const rtc::PacketOptions& options,
-                         int flags = 0) = 0;
+  int SendPacket(const char* data,
+                 size_t len,
+                 const rtc::PacketOptions& options,
+                 int flags = 0);
+
+  void OnPacket(const char* data,
+                size_t size,
+                const rtc::SocketAddress& addr,
+                const int64_t timestamp);
+
+  bool writable() { return true; };
+
+  sigslot::signal2<const char*, size_t> SignalReadPacket;
+
+  // variable
+  std::string local_ufrag_;
+  std::string local_password_;
+  UdpTransport* udp_transport_;
 };
 
 #endif /* SRC_ICE_TRANSPORT_H_ */

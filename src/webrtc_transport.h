@@ -3,19 +3,17 @@
 
 #include <string>
 
-#include "udp_transport.h"
+#include "ice_transport.h"
+#include "dtls_transport.h"
 
 class WebrtcTransport {
  public:
   WebrtcTransport(const std::string& ip, const int port);
 
-  void Receive(const char* data, size_t size, const rtc::SocketAddress& addr);
   void Init();
 
-  //variable
-  std::string local_ufrag_;
-  std::string local_password_;
-  UdpTransport *udp_transport;
+  DtlsTransport* dtls_transport_;
+  IceTransport *ice_transport_;
 };
 
 #endif /* SRC_WEBRTC_TRANSPORT_H_ */

@@ -17,7 +17,7 @@ void UdpTransport::Init() {
     rtp_socket_ =
         rtc::AsyncUDPSocket::Create(thread_->socketserver(), local_address_);
 
-    rtp_socket_->SignalReadPacket.connect(this, &UdpTransport::OnUdpPacket);
+    rtp_socket_->SignalReadPacket.connect(this, &UdpTransport::OnPacket);
   }));
 }
 
@@ -25,15 +25,13 @@ void UdpTransport::SetRemoteAddress(const std::string& ip, int port) {
   remote_address_ = rtc::SocketAddress(ip, port);
 }
 
-void UdpTransport::OnUdpPacket(rtc::AsyncPacketSocket* socket,
-                               const char* data,
-                               size_t size,
-                               const rtc::SocketAddress& addr,
-                               const int64_t& timestamp) {
+void UdpTransport::OnPacket(rtc::AsyncPacketSocket* socket,
+                            const char* data,
+                            size_t size,
+                            const rtc::SocketAddress& addr,
+                            const int64_t& timestamp) {
   ELOG_DEBUG("Get data from %s", addr.ToString().c_str());
-  if (data_callback_ != nullptr) {
-    data_callback_(data, size, addr);
-  }
+  SignalReadPacket(data, size, addr, timestamp);
 }
 
 void UdpTransport::SendPacket(const uint8_t* data, size_t size) {

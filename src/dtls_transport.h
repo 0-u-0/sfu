@@ -65,6 +65,8 @@ class DtlsTransport : public sigslot::has_slots<> {
       const webrtc::CryptoOptions& crypto_options,
       rtc::SSLProtocolVersion max_version = rtc::SSL_PROTOCOL_DTLS_12);
 
+  void Init();
+
   static rtc::scoped_refptr<rtc::RTCCertificate> certificate_;
   static const rtc::scoped_refptr<rtc::RTCCertificate>& certificate();
 
