@@ -7,12 +7,10 @@ DEFINE_LOGGER(UdpTransport, "UdpTransport");
 
 UdpTransport::UdpTransport(const std::string& ip, const int port) {
   local_address_ = rtc::SocketAddress(ip, port);
-
-  thread_ = rtc::Thread::CreateWithSocketServer();
+  thread_ = rtc::Thread::Current();
 }
 
 void UdpTransport::Init() {
-  thread_->Start();
   thread_->PostTask(webrtc::ToQueuedTask([this]() {
     rtp_socket_ =
         rtc::AsyncUDPSocket::Create(thread_->socketserver(), local_address_);

@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <rtc_base/thread.h>
+
 #include "dtls_transport.h"
 #include "ice_transport.h"
 
@@ -18,6 +20,7 @@ class WebrtcTransport {
   bool SetRemoteFingerprint(const std::string& algorithm,
                             const std::string& fingerprint);
 
+  std::unique_ptr<rtc::Thread> thread_;
   DtlsTransport* dtls_transport_;
   IceTransport* ice_transport_;
 };

@@ -26,13 +26,11 @@ class UdpTransport : public sigslot::has_slots<> {
                 const rtc::SocketAddress& addr,
                 const int64_t& timestamp);
 
-  sigslot::signal4<const char*,
-                   size_t,
-                   const rtc::SocketAddress&,
-                   const int64_t>
-      SignalReadPacket;
+  sigslot::
+      signal4<const char*, size_t, const rtc::SocketAddress&, const int64_t>
+          SignalReadPacket;
 
-  std::unique_ptr<rtc::Thread> thread_;
+  rtc::Thread* thread_;
   rtc::AsyncUDPSocket* rtp_socket_;
   rtc::SocketAddress local_address_;
   rtc::SocketAddress remote_address_;
