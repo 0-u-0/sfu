@@ -70,6 +70,16 @@ class DtlsTransport : public sigslot::has_slots<> {
   static rtc::scoped_refptr<rtc::RTCCertificate> certificate_;
   static const rtc::scoped_refptr<rtc::RTCCertificate>& certificate();
 
+  bool SetLocalCertificate(
+      const rtc::scoped_refptr<rtc::RTCCertificate>& certificate);
+  rtc::scoped_refptr<rtc::RTCCertificate> GetLocalCertificate() const;
+
+  bool SetRemoteFingerprint(const std::string& algorithm,
+                            const std::string& fingerprint);
+  bool SetRemoteFingerprint(const std::string& digest_alg,
+                            const uint8_t* digest,
+                            size_t digest_len);
+
   void OnPacket(const char* data, size_t size);
   bool HandleDtlsPacket(const char* data, size_t size);
   bool GetDtlsRole(rtc::SSLRole* role) const;
@@ -91,6 +101,7 @@ class DtlsTransport : public sigslot::has_slots<> {
     return sb.Release();
   }
 
+  bool dtls_active_ = false;
   IceTransport* ice_transport_;
   absl::optional<rtc::SSLRole> dtls_role_;
   const std::vector<int> srtp_ciphers_;  // SRTP ciphers to use with DTLS.

@@ -22,3 +22,13 @@ void WebrtcTransport::Init() {
   dtls_transport_->Init();
   ice_transport_->Init();
 }
+
+bool WebrtcTransport::SetLocalCertificate(
+    const rtc::scoped_refptr<rtc::RTCCertificate>& certificate) {
+  return dtls_transport_->SetLocalCertificate(certificate);
+}
+
+bool WebrtcTransport::SetRemoteFingerprint(const std::string& algorithm,
+                                           const std::string& fingerprint) {
+  return dtls_transport_->SetRemoteFingerprint(algorithm, fingerprint);
+}

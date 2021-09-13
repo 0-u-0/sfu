@@ -156,6 +156,7 @@ int main(int, char**) {
 
       auto webrtc = new WebrtcTransport(ip, port);
       webrtc->Init();
+      webrtc->SetLocalCertificate(cert);
       transports[tid] = webrtc;
 
       auto dtlsParameters = json::object();
@@ -185,6 +186,21 @@ int main(int, char**) {
       response["iceCandidates"] = iceCandidates;
       response["iceParameters"] = iceParameters;
       response["id"] = tid;
+
+      server_transport->Response(id, response);
+    } else if (method == "dtls") {
+      std::string transportId = data["transportId"];
+      auto t = transports[transportId];
+
+      json dtlsParameters = data["dtlsParameters"];
+      json fingerprint = dtlsParameters["fingerprint"];
+      std::string algorithm = fingerprint["algorithm"];
+      std::string value = fingerprint["value"];
+
+      // fingerprint->algorithm,
+      //       reinterpret_cast<const uint8_t*>(fingerprint->digest.data()),
+      //       fingerprint->digest.size())
+      t->SetRemoteFingerprint(algorithm, value);
 
       server_transport->Response(id, response);
     }

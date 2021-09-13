@@ -1,5 +1,6 @@
 #include "dtls_transport.h"
 
+#include <rtc_base/ssl_fingerprint.h>
 #include "rtc_base/logging.h"
 #include "rtc_base/rtc_certificate.h"
 #include "rtc_base/ssl_identity.h"
@@ -117,6 +118,8 @@ DtlsTransport::DtlsTransport(IceTransport* ice_transport,
 void DtlsTransport::Init() {
   ice_transport_->SignalReadPacket.connect(this, &DtlsTransport::OnPacket);
   // ice_transport_->Init();
+  // FIXME(CC): set by webrtc transport?
+  this->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
 }
 
 auto DtlsTransport::certificate_ = rtc::RTCCertificate::Create(
@@ -233,13 +236,24 @@ bool DtlsTransport::SetupDtls() {
   dtls_->SignalEvent.connect(this, &DtlsTransport::OnDtlsEvent);
   dtls_->SignalSSLHandshakeError.connect(this,
                                          &DtlsTransport::OnDtlsHandshakeError);
+
+  rtc::SSLPeerCertificateDigestError err;
   if (remote_fingerprint_value_.size() &&
       !dtls_->SetPeerCertificateDigest(
           remote_fingerprint_algorithm_,
           reinterpret_cast<unsigned char*>(remote_fingerprint_value_.data()),
-          remote_fingerprint_value_.size())) {
-    RTC_LOG(LS_ERROR) << ToString()
-                      << ": Couldn't set DTLS certificate digest.";
+          remote_fingerprint_value_.size(), &err)) {
+    if (err == rtc::SSLPeerCertificateDigestError::VERIFICATION_FAILED) {
+      RTC_LOG(LS_ERROR) << 1;
+    } else if (err == rtc::SSLPeerCertificateDigestError::INVALID_LENGTH) {
+      RTC_LOG(LS_ERROR) << 2;
+    } else if (err == rtc::SSLPeerCertificateDigestError::UNKNOWN_ALGORITHM) {
+      RTC_LOG(LS_ERROR) << 3;
+    } else if (err == rtc::SSLPeerCertificateDigestError::NONE) {
+      RTC_LOG(LS_ERROR) << 4;
+    }
+
+    RTC_LOG(LS_ERROR) << ": Couldn't set DTLS certificate digest.";
     return false;
   }
 
@@ -263,6 +277,123 @@ bool DtlsTransport::SetupDtls() {
 
 void DtlsTransport::OnDtlsHandshakeError(rtc::SSLHandshakeError error) {
   // SendDtlsHandshakeError(error);
+}
+
+bool DtlsTransport::SetLocalCertificate(
+    const rtc::scoped_refptr<rtc::RTCCertificate>& certificate) {
+  if (dtls_active_) {
+    if (certificate == local_certificate_) {
+      // This may happen during renegotiation.
+      RTC_LOG(LS_INFO) << ToString() << ": Ignoring identical DTLS identity";
+      return true;
+    } else {
+      RTC_LOG(LS_ERROR) << ToString()
+                        << ": Can't change DTLS local identity in this state";
+      return false;
+    }
+  }
+
+  if (certificate) {
+    local_certificate_ = certificate;
+    dtls_active_ = true;
+  } else {
+    RTC_LOG(LS_INFO) << ToString()
+                     << ": NULL DTLS identity supplied. Not doing DTLS";
+  }
+
+  return true;
+}
+
+rtc::scoped_refptr<rtc::RTCCertificate> DtlsTransport::GetLocalCertificate()
+    const {
+  return local_certificate_;
+}
+
+bool DtlsTransport::SetRemoteFingerprint(const std::string& algorithm,
+                                         const std::string& fingerprint) {
+  auto f = rtc::SSLFingerprint::CreateFromRfc4572(algorithm, fingerprint);
+  return SetRemoteFingerprint(
+      algorithm, reinterpret_cast<const uint8_t*>(f->digest.data()),
+      f->digest.size());
+}
+
+bool DtlsTransport::SetRemoteFingerprint(const std::string& digest_alg,
+                                         const uint8_t* digest,
+                                         size_t digest_len) {
+  RTC_LOG(INFO) << "Dtls SetRemoteFingerprint";
+
+  rtc::Buffer remote_fingerprint_value(digest, digest_len);
+
+  // Once we have the local certificate, the same remote fingerprint can be set
+  // multiple times.
+  if (dtls_active_ && remote_fingerprint_value_ == remote_fingerprint_value &&
+      !digest_alg.empty()) {
+    // This may happen during renegotiation.
+    RTC_LOG(LS_INFO) << ToString()
+                     << ": Ignoring identical remote DTLS fingerprint";
+    return true;
+  }
+
+  // If the other side doesn't support DTLS, turn off |dtls_active_|.
+  // TODO(deadbeef): Remove this. It's dangerous, because it relies on higher
+  // level code to ensure DTLS is actually used, but there are tests that
+  // depend on it, for the case where an m= section is rejected. In that case
+  // SetRemoteFingerprint shouldn't even be called though.
+  if (digest_alg.empty()) {
+    RTC_DCHECK(!digest_len);
+    RTC_LOG(LS_INFO) << ToString() << ": Other side didn't support DTLS.";
+    dtls_active_ = false;
+    return true;
+  }
+
+  // Otherwise, we must have a local certificate before setting remote
+  // fingerprint.
+  if (!dtls_active_) {
+    RTC_LOG(LS_ERROR) << ToString()
+                      << ": Can't set DTLS remote settings in this state.";
+    return false;
+  }
+
+  // At this point we know we are doing DTLS
+  bool fingerprint_changing = remote_fingerprint_value_.size() > 0u;
+  remote_fingerprint_value_ = std::move(remote_fingerprint_value);
+  remote_fingerprint_algorithm_ = digest_alg;
+
+  if (dtls_ && !fingerprint_changing) {
+    // This can occur if DTLS is set up before a remote fingerprint is
+    // received. For instance, if we set up DTLS due to receiving an early
+    // ClientHello.
+    rtc::SSLPeerCertificateDigestError err;
+    if (!dtls_->SetPeerCertificateDigest(
+            remote_fingerprint_algorithm_,
+            reinterpret_cast<unsigned char*>(remote_fingerprint_value_.data()),
+            remote_fingerprint_value_.size(), &err)) {
+      RTC_LOG(LS_ERROR) << ToString()
+                        << ": Couldn't set DTLS certificate digest.";
+      set_dtls_state(DTLS_TRANSPORT_FAILED);
+      // If the error is "verification failed", don't return false, because
+      // this means the fingerprint was formatted correctly but didn't match
+      // the certificate from the DTLS handshake. Thus the DTLS state should go
+      // to "failed", but SetRemoteDescription shouldn't fail.
+      return err == rtc::SSLPeerCertificateDigestError::VERIFICATION_FAILED;
+    }
+    return true;
+  }
+
+  // If the fingerprint is changing, we'll tear down the DTLS association and
+  // create a new one, resetting our state.
+  if (dtls_ && fingerprint_changing) {
+    dtls_.reset(nullptr);
+    set_dtls_state(DTLS_TRANSPORT_NEW);
+    // set_writable(false);
+  }
+
+  if (!SetupDtls()) {
+    set_dtls_state(DTLS_TRANSPORT_FAILED);
+    return false;
+  }
+
+  return true;
 }
 
 void DtlsTransport::OnPacket(const char* data, size_t size) {
