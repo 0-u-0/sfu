@@ -243,16 +243,6 @@ bool DtlsTransport::SetupDtls() {
           remote_fingerprint_algorithm_,
           reinterpret_cast<unsigned char*>(remote_fingerprint_value_.data()),
           remote_fingerprint_value_.size(), &err)) {
-    if (err == rtc::SSLPeerCertificateDigestError::VERIFICATION_FAILED) {
-      RTC_LOG(LS_ERROR) << 1;
-    } else if (err == rtc::SSLPeerCertificateDigestError::INVALID_LENGTH) {
-      RTC_LOG(LS_ERROR) << 2;
-    } else if (err == rtc::SSLPeerCertificateDigestError::UNKNOWN_ALGORITHM) {
-      RTC_LOG(LS_ERROR) << 3;
-    } else if (err == rtc::SSLPeerCertificateDigestError::NONE) {
-      RTC_LOG(LS_ERROR) << 4;
-    }
-
     RTC_LOG(LS_ERROR) << ": Couldn't set DTLS certificate digest.";
     return false;
   }
@@ -470,7 +460,25 @@ void DtlsTransport::OnPacket(const char* data, size_t size) {
 }
 
 bool DtlsTransport::HandleDtlsPacket(const char* data, size_t size) {
-  return true;
+  // Sanity check we're not passing junk that
+  // just looks like DTLS.
+  const uint8_t* tmp_data = reinterpret_cast<const uint8_t*>(data);
+  size_t tmp_size = size;
+  while (tmp_size > 0) {
+    if (tmp_size < kDtlsRecordHeaderLen)
+      return false;  // Too short for the header
+
+    size_t record_len = (tmp_data[11] << 8) | (tmp_data[12]);
+    if ((record_len + kDtlsRecordHeaderLen) > tmp_size)
+      return false;  // Body too short
+
+    tmp_data += record_len + kDtlsRecordHeaderLen;
+    tmp_size -= record_len + kDtlsRecordHeaderLen;
+  }
+
+  // Looks good. Pass to the SIC which ends up being passed to
+  // the DTLS stack.
+  return downward_->OnPacketReceived(data, size);
 }
 
 void DtlsTransport::set_dtls_state(DtlsTransportState state) {
@@ -488,55 +496,56 @@ void DtlsTransport::set_dtls_state(DtlsTransportState state) {
 }
 
 void DtlsTransport::OnDtlsEvent(rtc::StreamInterface* dtls, int sig, int err) {
-  // RTC_DCHECK_RUN_ON(&thread_checker_);
-  // RTC_DCHECK(dtls == dtls_.get());
-  // if (sig & rtc::SE_OPEN) {
-  //   // This is the first time.
-  //   RTC_LOG(LS_INFO) << ToString() << ": DTLS handshake complete.";
-  //   if (dtls_->GetState() == rtc::SS_OPEN) {
-  //     // The check for OPEN shouldn't be necessary but let's make
-  //     // sure we don't accidentally frob the state if it's closed.
-  //     set_dtls_state(DTLS_TRANSPORT_CONNECTED);
-  //     set_writable(true);
-  //   }
-  // }
-  // if (sig & rtc::SE_READ) {
-  //   char buf[kMaxDtlsPacketLen];
-  //   size_t read;
-  //   int read_error;
-  //   rtc::StreamResult ret;
-  //   // The underlying DTLS stream may have received multiple DTLS records in
-  //   // one packet, so read all of them.
-  //   do {
-  //     ret = dtls_->Read(buf, sizeof(buf), &read, &read_error);
-  //     if (ret == rtc::SR_SUCCESS) {
-  //       SignalReadPacket(this, buf, read, rtc::TimeMicros(), 0);
-  //     } else if (ret == rtc::SR_EOS) {
-  //       // Remote peer shut down the association with no error.
-  //       RTC_LOG(LS_INFO) << ToString() << ": DTLS transport closed by
-  //       remote"; set_writable(false); set_dtls_state(DTLS_TRANSPORT_CLOSED);
-  //       SignalClosed(this);
-  //     } else if (ret == rtc::SR_ERROR) {
-  //       // Remote peer shut down the association with an error.
-  //       RTC_LOG(LS_INFO)
-  //           << ToString()
-  //           << ": Closed by remote with DTLS transport error, code="
-  //           << read_error;
-  //       set_writable(false);
-  //       set_dtls_state(DTLS_TRANSPORT_FAILED);
-  //       SignalClosed(this);
-  //     }
-  //   } while (ret == rtc::SR_SUCCESS);
-  // }
-  // if (sig & rtc::SE_CLOSE) {
-  //   RTC_DCHECK(sig == rtc::SE_CLOSE);  // SE_CLOSE should be by itself.
-  //   set_writable(false);
-  //   if (!err) {
-  //     RTC_LOG(LS_INFO) << ToString() << ": DTLS transport closed";
-  //     set_dtls_state(DTLS_TRANSPORT_CLOSED);
-  //   } else {
-  //     RTC_LOG(LS_INFO) << ToString() << ": DTLS transport error, code=" <<
-  //     err; set_dtls_state(DTLS_TRANSPORT_FAILED);
-  //   }
-  // }
+  RTC_DCHECK_RUN_ON(&thread_checker_);
+  RTC_DCHECK(dtls == dtls_.get());
+  if (sig & rtc::SE_OPEN) {
+    // This is the first time.
+    RTC_LOG(LS_INFO) << ToString() << ": DTLS handshake complete.";
+    if (dtls_->GetState() == rtc::SS_OPEN) {
+      // The check for OPEN shouldn't be necessary but let's make
+      // sure we don't accidentally frob the state if it's closed.
+      set_dtls_state(DTLS_TRANSPORT_CONNECTED);
+      // set_writable(true);
+    }
+  }
+  if (sig & rtc::SE_READ) {
+    char buf[kMaxDtlsPacketLen];
+    size_t read;
+    int read_error;
+    rtc::StreamResult ret;
+    // The underlying DTLS stream may have received multiple DTLS records in
+    // one packet, so read all of them.
+    do {
+      ret = dtls_->Read(buf, sizeof(buf), &read, &read_error);
+      if (ret == rtc::SR_SUCCESS) {
+        // SignalReadPacket(this, buf, read, rtc::TimeMicros(), 0);
+      } else if (ret == rtc::SR_EOS) {
+        // Remote peer shut down the association with no error.
+        RTC_LOG(LS_INFO) << ToString() << ": DTLS transport closed by remote";
+        // set_writable(false);
+        set_dtls_state(DTLS_TRANSPORT_CLOSED);
+        // SignalClosed(this);
+      } else if (ret == rtc::SR_ERROR) {
+        // Remote peer shut down the association with an error.
+        RTC_LOG(LS_INFO)
+            << ToString()
+            << ": Closed by remote with DTLS transport error, code="
+            << read_error;
+        // set_writable(false);
+        set_dtls_state(DTLS_TRANSPORT_FAILED);
+        // SignalClosed(this);
+      }
+    } while (ret == rtc::SR_SUCCESS);
+  }
+  if (sig & rtc::SE_CLOSE) {
+    RTC_DCHECK(sig == rtc::SE_CLOSE);  // SE_CLOSE should be by itself.
+    // set_writable(false);
+    if (!err) {
+      RTC_LOG(LS_INFO) << ToString() << ": DTLS transport closed";
+      set_dtls_state(DTLS_TRANSPORT_CLOSED);
+    } else {
+      RTC_LOG(LS_INFO) << ToString() << ": DTLS transport error, code=" << err;
+      set_dtls_state(DTLS_TRANSPORT_FAILED);
+    }
+  }
 }

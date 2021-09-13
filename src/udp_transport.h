@@ -17,6 +17,7 @@ class UdpTransport : public sigslot::has_slots<> {
 
   void Init();
   void SetRemoteAddress(const std::string& ip, int port);
+  void SetRemoteAddress(const rtc::SocketAddress& remote_address);
 
   void SendPacket(const uint8_t* data, size_t size);
   void SendTo(const uint8_t* data, size_t size, const rtc::SocketAddress& addr);

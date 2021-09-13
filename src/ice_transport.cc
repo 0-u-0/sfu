@@ -118,6 +118,8 @@ void IceTransport::OnPacket(const char* data,
       rtc::ByteBufferWriter buf;
       response.Write(&buf);
       udp_transport_->SendTo((const uint8_t*)buf.Data(), buf.Length(), addr);
+
+      udp_transport_->SetRemoteAddress(addr);
     }
   } else if (IsDtls(data, size)) {
     SignalReadPacket(data, size);
@@ -128,5 +130,7 @@ int IceTransport::SendPacket(const char* data,
                              size_t len,
                              const rtc::PacketOptions& options,
                              int flags) {
+  RTC_LOG(INFO) << "SendPacket";
+  this->udp_transport_->SendPacket((const uint8_t *)data, len);
   return 0;
 }

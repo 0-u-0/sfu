@@ -22,6 +22,9 @@ void UdpTransport::Init() {
 void UdpTransport::SetRemoteAddress(const std::string& ip, int port) {
   remote_address_ = rtc::SocketAddress(ip, port);
 }
+void UdpTransport::SetRemoteAddress(const rtc::SocketAddress& remote_address) {
+  remote_address_ = remote_address;
+}
 
 void UdpTransport::OnPacket(rtc::AsyncPacketSocket* socket,
                             const char* data,
