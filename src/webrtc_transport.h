@@ -7,6 +7,7 @@
 
 #include "dtls_transport.h"
 #include "ice_transport.h"
+#include "srtp_transport.h"
 
 class WebrtcTransport {
  public:
@@ -21,8 +22,10 @@ class WebrtcTransport {
                             const std::string& fingerprint);
 
   std::unique_ptr<rtc::Thread> thread_;
+
   DtlsTransport* dtls_transport_;
   IceTransport* ice_transport_;
+  SrtpTransport* srtp_transport_;
 };
 
 #endif /* SRC_WEBRTC_TRANSPORT_H_ */

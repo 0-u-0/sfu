@@ -1,13 +1,14 @@
 #ifndef SRC_DTLS_TRANSPORT_H_
 #define SRC_DTLS_TRANSPORT_H_
 
+#include <rtc_base/callback_list.h>
+#include <rtc_base/strings/string_builder.h>
+#include <rtc_base/system/no_unique_address.h>
 #include "api/crypto/crypto_options.h"
 #include "api/sequence_checker.h"
 #include "rtc_base/buffer_queue.h"
 #include "rtc_base/rtc_certificate.h"
 #include "rtc_base/ssl_stream_adapter.h"
-#include "rtc_base/strings/string_builder.h"
-#include "rtc_base/system/no_unique_address.h"
 
 #include "ice_transport.h"
 
@@ -80,7 +81,7 @@ class DtlsTransport : public sigslot::has_slots<> {
                             const uint8_t* digest,
                             size_t digest_len);
 
-  void OnPacket(const char* data, size_t size);
+  void OnPacket(const char* data, size_t size, const int64_t packet_time_us);
   bool HandleDtlsPacket(const char* data, size_t size);
   bool GetDtlsRole(rtc::SSLRole* role) const;
   bool SetDtlsRole(rtc::SSLRole role);
@@ -91,6 +92,14 @@ class DtlsTransport : public sigslot::has_slots<> {
   void ConfigureHandshakeTimeout();
 
   void set_dtls_state(DtlsTransportState state);
+  void SendDtlsState(DtlsTransport* transport, DtlsTransportState state);
+  bool GetSrtpCryptoSuite(int* cipher);
+  bool ExportKeyingMaterial(const std::string& label,
+                            const uint8_t* context,
+                            size_t context_len,
+                            bool use_context,
+                            uint8_t* result,
+                            size_t result_len);
 
   DtlsTransportState dtls_state() const;
   std::string ToString() const {
@@ -118,6 +127,10 @@ class DtlsTransport : public sigslot::has_slots<> {
   StreamInterfaceChannel*
       downward_;  // Wrapper for ice_transport_, owned by dtls_.
   webrtc::SequenceChecker thread_checker_;
+  webrtc::CallbackList<DtlsTransport*, const DtlsTransportState>
+      dtls_state_callback_list_;
+  // Signalled each time a packet is received on this channel.
+  sigslot::signal4<const char*, size_t, const int64_t, int> SignalReadPacket;
 };
 
 #endif /* SRC_DTLS_TRANSPORT_H_ */

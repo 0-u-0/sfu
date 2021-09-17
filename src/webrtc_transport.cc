@@ -7,8 +7,6 @@
 #include <rtc_base/logging.h>
 #include <rtc_base/task_utils/to_queued_task.h>
 
-#include "dtls_transport.h"
-#include "ice_transport.h"
 #include "tools.h"
 
 using namespace cricket;
@@ -22,6 +20,12 @@ WebrtcTransport::WebrtcTransport(const std::string& ip, const int port) {
   dtls_transport_ = thread_->Invoke<DtlsTransport*>(RTC_FROM_HERE, [this]() {
     return new DtlsTransport(ice_transport_, webrtc::CryptoOptions(),
                              rtc::SSL_PROTOCOL_DTLS_12);
+  });
+
+  srtp_transport_ = thread_->Invoke<SrtpTransport*>(RTC_FROM_HERE, [this]() {
+    auto srtp = new SrtpTransport();
+    srtp->SetDtlsTransport(dtls_transport_);
+    return srtp;
   });
 }
 

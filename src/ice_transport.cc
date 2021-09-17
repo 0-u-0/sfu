@@ -121,8 +121,8 @@ void IceTransport::OnPacket(const char* data,
 
       udp_transport_->SetRemoteAddress(addr);
     }
-  } else if (IsDtls(data, size)) {
-    SignalReadPacket(data, size);
+  } else{
+    SignalReadPacket(data, size, timestamp);
   }
 }
 

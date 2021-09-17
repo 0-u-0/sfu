@@ -1,5 +1,6 @@
 #include "dtls_transport.h"
 
+#include <p2p/base/dtls_transport_internal.h>
 #include <rtc_base/ssl_fingerprint.h>
 #include "rtc_base/logging.h"
 #include "rtc_base/rtc_certificate.h"
@@ -386,9 +387,10 @@ bool DtlsTransport::SetRemoteFingerprint(const std::string& digest_alg,
   return true;
 }
 
-void DtlsTransport::OnPacket(const char* data, size_t size) {
-  RTC_LOG(INFO) << "Dtls packet";
-
+void DtlsTransport::OnPacket(const char* data,
+                             size_t size,
+                             const int64_t packet_time_us) {
+                               
   switch (dtls_state()) {
     case DTLS_TRANSPORT_NEW:
       if (dtls_) {
@@ -449,7 +451,7 @@ void DtlsTransport::OnPacket(const char* data, size_t size) {
 
         // Signal this upwards as a bypass packet.
         // TODO(CC):
-        // SignalReadPacket(this, data, size, packet_time_us, PF_SRTP_BYPASS);
+        SignalReadPacket(data, size, packet_time_us, cricket::PF_SRTP_BYPASS);
       }
       break;
     case DTLS_TRANSPORT_FAILED:
@@ -481,6 +483,31 @@ bool DtlsTransport::HandleDtlsPacket(const char* data, size_t size) {
   return downward_->OnPacketReceived(data, size);
 }
 
+void DtlsTransport::SendDtlsState(DtlsTransport* transport,
+                                  DtlsTransportState state) {
+  dtls_state_callback_list_.Send(transport, state);
+}
+
+bool DtlsTransport::GetSrtpCryptoSuite(int* cipher) {
+  if (dtls_state() != DTLS_TRANSPORT_CONNECTED) {
+    return false;
+  }
+
+  return dtls_->GetDtlsSrtpCryptoSuite(cipher);
+}
+
+bool DtlsTransport::ExportKeyingMaterial(const std::string& label,
+                                         const uint8_t* context,
+                                         size_t context_len,
+                                         bool use_context,
+                                         uint8_t* result,
+                                         size_t result_len) {
+  return (dtls_.get())
+             ? dtls_->ExportKeyingMaterial(label, context, context_len,
+                                           use_context, result, result_len)
+             : false;
+}
+
 void DtlsTransport::set_dtls_state(DtlsTransportState state) {
   if (dtls_state_ == state) {
     return;
@@ -492,7 +519,7 @@ void DtlsTransport::set_dtls_state(DtlsTransportState state) {
   RTC_LOG(LS_VERBOSE) << ToString() << ": set_dtls_state from:" << dtls_state_
                       << " to " << state;
   dtls_state_ = state;
-  // SendDtlsState(this, state);
+  SendDtlsState(this, state);
 }
 
 void DtlsTransport::OnDtlsEvent(rtc::StreamInterface* dtls, int sig, int err) {
