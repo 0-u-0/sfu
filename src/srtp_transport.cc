@@ -17,7 +17,7 @@ void SrtpTransport::SetDtlsTransport(DtlsTransport* dtls_transport) {
       this, [this](DtlsTransport* transport, const DtlsTransportState state) {
         OnDtlsState(transport, state);
       });
-  dtls_transport_->SignalReadPacket.connect(this,&SrtpTransport::OnReadPacket);
+  dtls_transport_->SignalReadPacket.connect(this, &SrtpTransport::OnReadPacket);
 }
 
 void SrtpTransport::SetupRtpDtlsSrtp() {
@@ -244,6 +244,7 @@ void SrtpTransport::OnRtpPacketReceived(rtc::CopyOnWriteBuffer packet,
   packet.SetSize(len);
   // DemuxPacket(std::move(packet), packet_time_us);
 
+  packet_callback_list_.Send(std::move(packet));
   RTC_LOG(INFO) << "!!!!";
 }
 

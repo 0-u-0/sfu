@@ -4,6 +4,7 @@
 #include <api/crypto_params.h>
 #include <pc/srtp_session.h>
 #include <rtc_base/copy_on_write_buffer.h>
+#include <rtc_base/callback_list.h>
 
 #include "dtls_transport.h"
 
@@ -51,6 +52,7 @@ class SrtpTransport : public sigslot::has_slots<> {
   // The encrypted header extension IDs.
   absl::optional<std::vector<int>> send_extension_ids_;
   absl::optional<std::vector<int>> recv_extension_ids_;
+  webrtc::CallbackList<rtc::CopyOnWriteBuffer> packet_callback_list_;
 
   int decryption_failure_count_ = 0;
 };

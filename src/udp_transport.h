@@ -6,6 +6,7 @@
 #include <rtc_base/async_udp_socket.h>
 #include <rtc_base/third_party/sigslot/sigslot.h>
 #include <rtc_base/thread.h>
+#include <api/sequence_checker.h>
 
 #include "logger.h"
 
@@ -15,12 +16,12 @@ class UdpTransport : public sigslot::has_slots<> {
  public:
   UdpTransport(const std::string& ip, const int port);
 
-  void Init();
-  void SetRemoteAddress(const std::string& ip, int port);
-  void SetRemoteAddress(const rtc::SocketAddress& remote_address);
+  void Init() RTC_RUN_ON(thread_);
+  void SetRemoteAddress(const std::string& ip, int port) RTC_RUN_ON(thread_);
+  void SetRemoteAddress(const rtc::SocketAddress& remote_address) RTC_RUN_ON(thread_);
 
-  void SendPacket(const uint8_t* data, size_t size);
-  void SendTo(const uint8_t* data, size_t size, const rtc::SocketAddress& addr);
+  void SendPacket(const uint8_t* data, size_t size) RTC_RUN_ON(thread_);
+  void SendTo(const uint8_t* data, size_t size, const rtc::SocketAddress& addr) RTC_RUN_ON(thread_);
   void OnPacket(rtc::AsyncPacketSocket* socket,
                 const char* data,
                 size_t size,

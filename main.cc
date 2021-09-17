@@ -1,7 +1,9 @@
 #include <iostream>
+#include <type_traits>
 
 #include "dtls_transport.h"
 #include "rtc_base/ssl_fingerprint.h"
+#include "rtp_transport.h"
 #include "server_transport.h"
 #include "webrtc_transport.h"
 
@@ -155,6 +157,16 @@ int main(int, char**) {
           rtc::SSLFingerprint::CreateFromCertificate(*cert);
 
       auto webrtc = new WebrtcTransport(ip, port);
+
+      auto rtp = new RtpTransport(ip, 12312);
+      webrtc->packet_callback_list_.AddReceiver(
+          [rtp](rtc::CopyOnWriteBuffer packet) {
+            rtp->SendPacket(std::move(packet));
+          });
+
+      rtp->SetRemoteAddress(ip, 30001);
+      rtp->Init();
+
       webrtc->Init();
       webrtc->SetLocalCertificate(cert);
       transports[tid] = webrtc;

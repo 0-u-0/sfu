@@ -4,6 +4,7 @@
 #include <string>
 
 #include <rtc_base/thread.h>
+#include <rtc_base/callback_list.h>
 
 #include "dtls_transport.h"
 #include "ice_transport.h"
@@ -26,6 +27,8 @@ class WebrtcTransport {
   DtlsTransport* dtls_transport_;
   IceTransport* ice_transport_;
   SrtpTransport* srtp_transport_;
+
+  webrtc::CallbackList<rtc::CopyOnWriteBuffer> packet_callback_list_;
 };
 
 #endif /* SRC_WEBRTC_TRANSPORT_H_ */
