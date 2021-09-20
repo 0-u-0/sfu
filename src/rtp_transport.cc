@@ -14,7 +14,17 @@ RtpTransport::RtpTransport(const std::string& ip, const int port) {
 }
 
 void RtpTransport::Init() {
-  thread_->PostTask(webrtc::ToQueuedTask([this]() { udp_transport_->Init(); }));
+  thread_->PostTask(webrtc::ToQueuedTask([this]() {
+    udp_transport_->Init();
+    udp_transport_->SignalReadPacket.connect(this, &RtpTransport::OnPacket);
+  }));
+}
+
+void RtpTransport::OnPacket(const char* data,
+                            size_t size,
+                            const rtc::SocketAddress& addr,
+                            const int64_t timestamp) {
+  SignalReadPacket(data, size, timestamp);
 }
 
 void RtpTransport::SetRemoteAddress(const std::string& ip, const int port) {

@@ -49,7 +49,7 @@ void ServerTransport::Send(const std::string &message) {
 }
 
 void ServerTransport::Init(int port) {
-  try {
+  {
     // Set logging settings
     server_->set_access_channels(websocketpp::log::alevel::none);
     // server_->clear_access_channels(websocketpp::log::alevel::frame_payload);
@@ -124,9 +124,10 @@ void ServerTransport::Init(int port) {
 
     // Start the ASIO io_service run loop
     server_->run();
-  } catch (websocketpp::exception const &e) {
-    std::cout << e.what() << std::endl;
-  } catch (...) {
-    std::cout << "other exception" << std::endl;
-  }
+  } 
+  // catch (websocketpp::exception const &e) {
+  //   std::cout << e.what() << std::endl;
+  // } catch (...) {
+  //   std::cout << "other exception" << std::endl;
+  // }
 }

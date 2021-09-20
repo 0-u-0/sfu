@@ -3,8 +3,8 @@
 
 #include <api/crypto_params.h>
 #include <pc/srtp_session.h>
-#include <rtc_base/copy_on_write_buffer.h>
 #include <rtc_base/callback_list.h>
+#include <rtc_base/copy_on_write_buffer.h>
 
 #include "dtls_transport.h"
 
@@ -39,6 +39,11 @@ class SrtpTransport : public sigslot::has_slots<> {
 
   void ResetParams();
   void CreateSrtpSessions();
+
+  bool SendRtpPacket(const char* data,
+                size_t size,
+                     const rtc::PacketOptions& options);
+  bool ProtectRtp(void* p, int in_len, int max_len, int* out_len);
 
   DtlsTransport* dtls_transport_;
   absl::optional<cricket::CryptoParams> send_params_;

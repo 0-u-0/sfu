@@ -5,6 +5,8 @@
 
 #include "udp_transport.h"
 
+// ice-lite
+// https://datatracker.ietf.org/doc/html/rfc5245#section-2.7
 class IceTransport : public sigslot::has_slots<> {
  public:
   IceTransport(const std::string& ip, const int port);

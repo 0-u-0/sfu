@@ -10,6 +10,7 @@
 SrtpTransport::SrtpTransport() {}
 
 static const char kDtlsSrtpExporterLabel[] = "EXTRACTOR-dtls_srtp";
+static const size_t kMaxSrtpHmacOverhead = 16;
 
 void SrtpTransport::SetDtlsTransport(DtlsTransport* dtls_transport) {
   dtls_transport_ = dtls_transport;
@@ -246,6 +247,56 @@ void SrtpTransport::OnRtpPacketReceived(rtc::CopyOnWriteBuffer packet,
 
   packet_callback_list_.Send(std::move(packet));
   RTC_LOG(INFO) << "!!!!";
+}
+
+bool SrtpTransport::SendRtpPacket(const char* data2,
+                                  size_t size,
+                                  const rtc::PacketOptions& options) {
+  auto packet = rtc::CopyOnWriteBuffer(data2, size);
+  
+  packet.EnsureCapacity(size+kMaxSrtpHmacOverhead);
+  // if (!IsSrtpActive()) {
+  //   RTC_LOG(LS_ERROR)
+  //       << "Failed to send the packet because SRTP transport is inactive.";
+  //   return false;
+  // }
+  rtc::PacketOptions updated_options = options;
+  // TRACE_EVENT0("webrtc", "SRTP Encode");
+  bool res;
+  uint8_t* data = packet.MutableData();
+  int len = rtc::checked_cast<int>(packet.size());
+  // If ENABLE_EXTERNAL_AUTH flag is on then packet authentication is not done
+  // inside libsrtp for a RTP packet. A external HMAC module will be writing
+  // a fake HMAC value. This is ONLY done for a RTP packet.
+  // Socket layer will update rtp sendtime extension header if present in
+  // packet with current time before updating the HMAC.
+  res = ProtectRtp(data, len, static_cast<int>(packet.capacity()), &len);
+
+  if (!res) {
+    int seq_num = -1;
+    uint32_t ssrc = 0;
+    cricket::GetRtpSeqNum(data, len, &seq_num);
+    cricket::GetRtpSsrc(data, len, &ssrc);
+    RTC_LOG(LS_ERROR) << "Failed to protect RTP packet: size=" << len
+                      << ", seqnum=" << seq_num << ", SSRC=" << ssrc;
+    return false;
+  }
+
+  // Update the length of the packet now that we've added the auth tag.
+  packet.SetSize(len);
+
+  dtls_transport_->ice_transport_->udp_transport_->SendPacket(packet.data(),
+                                                              packet.size());
+  return true;
+}
+
+bool SrtpTransport::ProtectRtp(void* p, int in_len, int max_len, int* out_len) {
+  // if (!IsSrtpActive()) {
+  //   RTC_LOG(LS_WARNING) << "Failed to ProtectRtp: SRTP not active";
+  //   return false;
+  // }
+  RTC_CHECK(send_session_);
+  return send_session_->ProtectRtp(p, in_len, max_len, out_len);
 }
 
 bool SrtpTransport::UnprotectRtp(void* p, int in_len, int* out_len) {

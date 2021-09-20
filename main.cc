@@ -152,24 +152,40 @@ int main(int, char**) {
       //       fingerprint->algorithm,
       //       reinterpret_cast<const uint8_t*>(fingerprint->digest.data()),
       //       fingerprint->digest.size()));
+      std::string direction = data["direction"];
+
       auto cert = DtlsTransport::certificate();
       std::unique_ptr<rtc::SSLFingerprint> fingerprint =
           rtc::SSLFingerprint::CreateFromCertificate(*cert);
 
-      auto webrtc = new WebrtcTransport(ip, port);
+      if (direction == "sendonly") {
+        auto webrtc = new WebrtcTransport(direction, ip, port);
 
-      auto rtp = new RtpTransport(ip, 12312);
-      webrtc->packet_callback_list_.AddReceiver(
-          [rtp](rtc::CopyOnWriteBuffer packet) {
-            rtp->SendPacket(std::move(packet));
-          });
+        auto rtp = new RtpTransport(ip, 12312);
+        webrtc->packet_callback_list_.AddReceiver(
+            [rtp](rtc::CopyOnWriteBuffer packet) {
+              rtp->SendPacket(std::move(packet));
+            });
 
-      rtp->SetRemoteAddress(ip, 30001);
-      rtp->Init();
+        rtp->SetRemoteAddress(ip, 30001);
+        rtp->Init();
 
-      webrtc->Init();
-      webrtc->SetLocalCertificate(cert);
-      transports[tid] = webrtc;
+        webrtc->Init();
+        webrtc->SetLocalCertificate(cert);
+        transports[tid] = webrtc;
+      } else {
+        auto webrtc = new WebrtcTransport(direction, ip, port);
+
+        auto rtp = new RtpTransport(ip, 12312);
+        rtp->SignalReadPacket.connect(webrtc, &WebrtcTransport::OnPacket);
+
+        // rtp->SetRemoteAddress(ip, 30001);
+        rtp->Init();
+
+        webrtc->Init();
+        webrtc->SetLocalCertificate(cert);
+        transports[tid] = webrtc;
+      }
 
       auto dtlsParameters = json::object();
       dtlsParameters["algorithm"] = fingerprint->algorithm;
@@ -213,6 +229,33 @@ int main(int, char**) {
       //       reinterpret_cast<const uint8_t*>(fingerprint->digest.data()),
       //       fingerprint->digest.size())
       t->SetRemoteFingerprint(algorithm, value);
+
+      server_transport->Response(id, response);
+    } else if (method == "subscribe") {
+      std::string codec_str =
+          "{\"channels\":1,\"clockRate\":90000,\"cname\":\"qGQTLKrHBlhpw7P1\","
+          "\"codecFullName\":\"VP8\",\"codecName\":\"VP8\",\"dtx\":false,"
+          "\"extensions\":[{\"id\":1,\"uri\":\"urn:ietf:params:rtp-hdrext:sdes:"
+          "mid\"},{\"id\":4,\"uri\":\"http://www.webrtc.org/experiments/"
+          "rtp-hdrext/abs-send-time\"},{\"id\":5,\"uri\":\"http://www.ietf.org/"
+          "id/"
+          "draft-holmer-rmcat-transport-wide-cc-extensions-01\"},{\"id\":6,"
+          "\"uri\":\"http://tools.ietf.org/html/"
+          "draft-ietf-avtext-framemarking-07\"},{\"id\":7,\"uri\":\"urn:ietf:"
+          "params:rtp-hdrext:framemarking\"},{\"id\":11,\"uri\":\"urn:3gpp:"
+          "video-orientation\"},{\"id\":12,\"uri\":\"urn:ietf:params:rtp-"
+          "hdrext:toffset\"}],\"kind\":\"video\",\"mux\":true,\"parameters\":{}"
+          ",\"payload\":101,\"reducedSize\":true,\"rtcpFeedback\":[{"
+          "\"parameter\":\"\",\"type\":\"nack\"},{\"parameter\":\"pli\","
+          "\"type\":\"nack\"},{\"parameter\":\"fir\",\"type\":\"ccm\"},{"
+          "\"parameter\":\"\",\"type\":\"transport-cc\"}],\"rtx\":{\"payload\":"
+          "102,\"ssrc\":134172938},\"senderPaused\":false,\"ssrc\":489788816}";
+      auto codec = json::parse(codec_str);
+
+      response["codec"] = codec;
+      response["receiverId"] = "c84295cd-411c-4e05-9131-199982392d6d";
+      response["senderId"] = "a72992de-71d1-4c2f-9406-d2a05d2007d0";
+      response["id"] = tid;
 
       server_transport->Response(id, response);
     }

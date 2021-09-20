@@ -3,16 +3,18 @@
 
 #include <string>
 
-#include <rtc_base/thread.h>
 #include <rtc_base/callback_list.h>
+#include <rtc_base/thread.h>
 
 #include "dtls_transport.h"
 #include "ice_transport.h"
 #include "srtp_transport.h"
 
-class WebrtcTransport {
+class WebrtcTransport : public sigslot::has_slots<>  {
  public:
-  WebrtcTransport(const std::string& ip, const int port);
+  WebrtcTransport(const std::string& direction,
+                  const std::string& ip,
+                  const int port);
 
   void Init();
   bool SetLocalCertificate(
@@ -22,8 +24,14 @@ class WebrtcTransport {
   bool SetRemoteFingerprint(const std::string& algorithm,
                             const std::string& fingerprint);
 
+ void OnPacket(const char* data,
+                size_t size,
+                const int64_t timestamp);
+
+
   std::unique_ptr<rtc::Thread> thread_;
 
+  std::string direction_;
   DtlsTransport* dtls_transport_;
   IceTransport* ice_transport_;
   SrtpTransport* srtp_transport_;

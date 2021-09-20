@@ -12,7 +12,10 @@
 
 using namespace cricket;
 
-WebrtcTransport::WebrtcTransport(const std::string& ip, const int port) {
+WebrtcTransport::WebrtcTransport(const std::string& direction,
+                                 const std::string& ip,
+                                 const int port) {
+  direction_ = direction;
   thread_ = rtc::Thread::CreateWithSocketServer();
   thread_->Start();
 
@@ -25,9 +28,10 @@ WebrtcTransport::WebrtcTransport(const std::string& ip, const int port) {
 
   srtp_transport_ = thread_->Invoke<SrtpTransport*>(RTC_FROM_HERE, [this]() {
     auto srtp = new SrtpTransport();
-    srtp->packet_callback_list_.AddReceiver(this,[this](rtc::CopyOnWriteBuffer packet){
-      this->packet_callback_list_.Send(std::move(packet));
-    }); 
+    srtp->packet_callback_list_.AddReceiver(
+        this, [this](rtc::CopyOnWriteBuffer packet) {
+          this->packet_callback_list_.Send(std::move(packet));
+        });
     srtp->SetDtlsTransport(dtls_transport_);
     return srtp;
   });
@@ -35,9 +39,27 @@ WebrtcTransport::WebrtcTransport(const std::string& ip, const int port) {
 
 void WebrtcTransport::Init() {
   thread_->PostTask(webrtc::ToQueuedTask([this]() {
-    dtls_transport_->Init();
+    bool is_client = true;
+    if (direction_ == "recvonly") {
+      is_client = false;
+    }
+    dtls_transport_->Init(is_client);
     ice_transport_->Init();
   }));
+}
+
+void WebrtcTransport::OnPacket(const char* data,
+                               size_t size,
+                               const int64_t timestamp) {
+  auto packet = rtc::CopyOnWriteBuffer(data, size);
+
+  thread_->PostTask(
+      webrtc::ToQueuedTask([this, packet_copy = std::move(packet)]() {
+        rtc::PacketOptions packet_options;
+  
+        srtp_transport_->SendRtpPacket((const char*)packet_copy.data(),
+                                   packet_copy.size(), packet_options);
+      }));
 }
 
 bool WebrtcTransport::SetLocalCertificate(

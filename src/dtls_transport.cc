@@ -116,11 +116,16 @@ DtlsTransport::DtlsTransport(IceTransport* ice_transport,
       srtp_ciphers_(crypto_options.GetSupportedDtlsSrtpCryptoSuites()),
       ssl_max_version_(max_version) {}
 
-void DtlsTransport::Init() {
+void DtlsTransport::Init(bool is_client) {
   ice_transport_->SignalReadPacket.connect(this, &DtlsTransport::OnPacket);
   // ice_transport_->Init();
   // FIXME(CC): set by webrtc transport?
-  this->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
+  if (is_client) {
+    this->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
+  } else {
+    this->SetDtlsRole(rtc::SSLRole::SSL_SERVER);
+  }
+  // this->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
 }
 
 auto DtlsTransport::certificate_ = rtc::RTCCertificate::Create(
@@ -390,7 +395,7 @@ bool DtlsTransport::SetRemoteFingerprint(const std::string& digest_alg,
 void DtlsTransport::OnPacket(const char* data,
                              size_t size,
                              const int64_t packet_time_us) {
-                               
+  RTC_LOG(INFO) << "OnPacket";
   switch (dtls_state()) {
     case DTLS_TRANSPORT_NEW:
       if (dtls_) {
