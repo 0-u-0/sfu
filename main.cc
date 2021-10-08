@@ -8,8 +8,6 @@
 #include "server_transport.h"
 #include "webrtc_transport.h"
 
-using namespace std;
-
 int main(int, char**) {
   rtc::tracing::SetupInternalTracer();
   rtc::tracing::StartInternalCapture(
@@ -27,7 +25,7 @@ int main(int, char**) {
   server_transport->request_callback_ = [server_transport, &transports, tid, ip,
                                          port](int id, std::string method,
                                                json data) {
-    cout << "get request " << method << endl;
+    std::cout << "get request " << method << std::endl;
     json response;
     if (method == "join") {
       std::string codec_str = R"({

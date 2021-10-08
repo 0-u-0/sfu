@@ -6,9 +6,7 @@
 
 #include "tools.h"
 
-using namespace cricket;
-
-bool ParseStunUsername(const StunMessage* stun_msg,
+bool ParseStunUsername(const cricket::StunMessage* stun_msg,
                        std::string* local_ufrag,
                        std::string* remote_ufrag) {
   // The packet must include a username that either begins or ends with our
@@ -16,10 +14,10 @@ bool ParseStunUsername(const StunMessage* stun_msg,
   // should end with our fragment if it is a response.
   local_ufrag->clear();
   remote_ufrag->clear();
-  const StunByteStringAttribute* username_attr =
-      stun_msg->GetByteString(STUN_ATTR_USERNAME);
-  if (username_attr == NULL)
+  auto username_attr = stun_msg->GetByteString(cricket::STUN_ATTR_USERNAME);
+  if (username_attr == NULL) {
     return false;
+  }
 
   // RFRAG:LFRAG
   const std::string username = username_attr->GetString();
@@ -33,18 +31,20 @@ bool ParseStunUsername(const StunMessage* stun_msg,
   return true;
 }
 
-void GetStunBindResponse(StunMessage* request,
+void GetStunBindResponse(cricket::StunMessage* request,
                          const rtc::SocketAddress& remote_addr,
-                         StunMessage* response) {
-  response->SetType(STUN_BINDING_RESPONSE);
+                         cricket::StunMessage* response) {
+  response->SetType(cricket::STUN_BINDING_RESPONSE);
   response->SetTransactionID(request->transaction_id());
 
   // Tell the user the address that we received their request from.
-  std::unique_ptr<StunAddressAttribute> mapped_addr;
+  std::unique_ptr<cricket::StunAddressAttribute> mapped_addr;
   if (request->IsLegacy()) {
-    mapped_addr = StunAttribute::CreateAddress(STUN_ATTR_MAPPED_ADDRESS);
+    mapped_addr = cricket::StunAttribute::CreateAddress(
+        cricket::STUN_ATTR_MAPPED_ADDRESS);
   } else {
-    mapped_addr = StunAttribute::CreateXorAddress(STUN_ATTR_XOR_MAPPED_ADDRESS);
+    mapped_addr = cricket::StunAttribute::CreateXorAddress(
+        cricket::STUN_ATTR_XOR_MAPPED_ADDRESS);
   }
   mapped_addr->SetAddress(remote_addr);
   response->AddAttribute(std::move(mapped_addr));
@@ -69,22 +69,23 @@ void IceTransport::OnPacket(const char* data,
   if (IsStun(data, size)) {
     // Parse the request message.  If the packet is not a complete and correct
     // STUN message, then ignore it.
-    std::unique_ptr<IceMessage> stun_msg(new IceMessage());
+    std::unique_ptr<cricket::IceMessage> stun_msg(new cricket::IceMessage());
     rtc::ByteBufferReader buf(data, size);
     if (!stun_msg->Read(&buf) || (buf.Length() > 0)) {
       RTC_LOG(INFO) << "invalid!";
       return;
     }
 
-    if (stun_msg->type() == STUN_BINDING_REQUEST) {
+    if (stun_msg->type() == cricket::STUN_BINDING_REQUEST) {
       RTC_LOG(INFO) << "STUN_BINDING_REQUEST";
 
       // Check for the presence of USERNAME and MESSAGE-INTEGRITY (if ICE)
       // first.
       // If not present, fail with a 400 Bad Request.
-      if (!stun_msg->GetByteString(STUN_ATTR_USERNAME) ||
-          !stun_msg->GetByteString(STUN_ATTR_MESSAGE_INTEGRITY)) {
-        RTC_LOG(LS_ERROR) << "Received " << StunMethodToString(stun_msg->type())
+      if (!stun_msg->GetByteString(cricket::STUN_ATTR_USERNAME) ||
+          !stun_msg->GetByteString(cricket::STUN_ATTR_MESSAGE_INTEGRITY)) {
+        RTC_LOG(LS_ERROR) << "Received "
+                          << cricket::StunMethodToString(stun_msg->type())
                           << " without username/M-I from";
         // SendBindingErrorResponse(stun_msg.get(), addr,
         // STUN_ERROR_BAD_REQUEST,
@@ -97,7 +98,8 @@ void IceTransport::OnPacket(const char* data,
       std::string remote_ufrag;
       if (!ParseStunUsername(stun_msg.get(), &local_ufrag, &remote_ufrag) ||
           local_ufrag != local_ufrag_) {
-        RTC_LOG(LS_ERROR) << "Received " << StunMethodToString(stun_msg->type())
+        RTC_LOG(LS_ERROR) << "Received "
+                          << cricket::StunMethodToString(stun_msg->type())
                           << " with bad local username " << local_ufrag_;
         // SendBindingErrorResponse(stun_msg.get(), addr,
         // STUN_ERROR_UNAUTHORIZED,
@@ -105,23 +107,24 @@ void IceTransport::OnPacket(const char* data,
         return;
       }
 
-      StunMessage response;
+      cricket::StunMessage response;
       // response.AddAttribute(
       //     std::make_unique<StunByteStringAttribute>(STUN_ATTR_USE_CANDIDATE));
       std::string username = remote_ufrag + ":" + local_ufrag;
-      response.AddAttribute(std::make_unique<StunByteStringAttribute>(
-          STUN_ATTR_USERNAME, username));
+      response.AddAttribute(std::make_unique<cricket::StunByteStringAttribute>(
+          cricket::STUN_ATTR_USERNAME, username));
       GetStunBindResponse(stun_msg.get(), addr, &response);
       response.AddMessageIntegrity(local_password_);
       response.AddFingerprint();
 
       rtc::ByteBufferWriter buf;
       response.Write(&buf);
-      udp_transport_->SendTo((const uint8_t*)buf.Data(), buf.Length(), addr);
+      udp_transport_->SendTo(reinterpret_cast<const uint8_t*>(buf.Data()),
+                             buf.Length(), addr);
 
       udp_transport_->SetRemoteAddress(addr);
     }
-  } else{
+  } else {
     SignalReadPacket(data, size, timestamp);
   }
 }
@@ -131,6 +134,6 @@ int IceTransport::SendPacket(const char* data,
                              const rtc::PacketOptions& options,
                              int flags) {
   RTC_LOG(INFO) << "SendPacket";
-  this->udp_transport_->SendPacket((const uint8_t *)data, len);
+  this->udp_transport_->SendPacket(reinterpret_cast<const uint8_t*>(data), len);
   return 0;
 }

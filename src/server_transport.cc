@@ -8,16 +8,18 @@ using websocketpp::lib::bind;
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 
-using namespace std;
-
-bool validate_func_subprotocol(server *s, std::string *out, std::string accept,
+bool validate_func_subprotocol(server* s,
+                               std::string* out,
+                               std::string accept,
                                websocketpp::connection_hdl hdl) {
   server::connection_ptr con = s->get_con_from_hdl(hdl);
   con->select_subprotocol(accept);
   return true;
 }
 
-ServerTransport::ServerTransport() { server_ = new server(); }
+ServerTransport::ServerTransport() {
+  server_ = new server();
+}
 
 void ServerTransport::Response(int id, json data) {
   json requestMes;
@@ -44,7 +46,7 @@ void ServerTransport::Response(int id) {
   Send(mes);
 }
 
-void ServerTransport::Send(const std::string &message) {
+void ServerTransport::Send(const std::string& message) {
   server_->send(handler_, message, websocketpp::frame::opcode::text);
 }
 
@@ -65,7 +67,7 @@ void ServerTransport::Init(int port) {
 
     // Register our message handler
     server_->set_message_handler(bind(
-        [this](server *s, websocketpp::connection_hdl hdl, message_ptr msg) {
+        [this](server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
           //   std::cout << "on_message called with hdl: " << hdl.lock().get()
           //             << " and message: " << msg->get_payload() << std::endl;
 
@@ -99,7 +101,7 @@ void ServerTransport::Init(int port) {
 
                 if (id_json.is_number_integer() && method_json.is_string() &&
                     data.is_object()) {
-                  int id = id_json.get<int>(); // TODO(CC): check id
+                  int id = id_json.get<int>();  // TODO(CC): check id
 
                   std::string method = method_json.get<std::string>();
 
@@ -124,7 +126,7 @@ void ServerTransport::Init(int port) {
 
     // Start the ASIO io_service run loop
     server_->run();
-  } 
+  }
   // catch (websocketpp::exception const &e) {
   //   std::cout << e.what() << std::endl;
   // } catch (...) {

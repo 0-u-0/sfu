@@ -57,7 +57,7 @@ void WebrtcTransport::OnPacket(const char* data,
       webrtc::ToQueuedTask([this, packet_copy = std::move(packet)]() {
         rtc::PacketOptions packet_options;
   
-        srtp_transport_->SendRtpPacket((const char*)packet_copy.data(),
+        srtp_transport_->SendRtpPacket(reinterpret_cast<const char*>(packet_copy.data()),
                                    packet_copy.size(), packet_options);
       }));
 }
