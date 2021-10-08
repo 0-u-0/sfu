@@ -1,2 +1,6 @@
+# Defines the Chromium style for automatic reformatting.
+# http://clang.llvm.org/docs/ClangFormatStyleOptions.html
 BasedOnStyle: Chromium
-Standard: Cpp11
+---
+Language: Cpp
+IncludeBlocks: Regroup
