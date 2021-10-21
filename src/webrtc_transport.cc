@@ -43,6 +43,9 @@ void WebrtcTransport::Init() {
     if (direction_ == "recvonly") {
       is_client = false;
     }
+    packet_callback_list_.AddReceiver(
+        [](rtc::CopyOnWriteBuffer packet) { RTC_LOG(INFO) << "packet"; });
+
     dtls_transport_->Init(is_client);
     ice_transport_->Init();
   }));
@@ -56,9 +59,10 @@ void WebrtcTransport::OnPacket(const char* data,
   thread_->PostTask(
       webrtc::ToQueuedTask([this, packet_copy = std::move(packet)]() {
         rtc::PacketOptions packet_options;
-  
-        srtp_transport_->SendRtpPacket(reinterpret_cast<const char*>(packet_copy.data()),
-                                   packet_copy.size(), packet_options);
+
+        srtp_transport_->SendRtpPacket(
+            reinterpret_cast<const char*>(packet_copy.data()),
+            packet_copy.size(), packet_options);
       }));
 }
 
@@ -74,4 +78,10 @@ bool WebrtcTransport::SetRemoteFingerprint(const std::string& algorithm,
   return thread_->Invoke<bool>(RTC_FROM_HERE, [this, algorithm, fingerprint]() {
     return dtls_transport_->SetRemoteFingerprint(algorithm, fingerprint);
   });
+}
+
+Sender* WebrtcTransport::CreateSender(json codec) {
+  auto* sender = new Sender();
+
+  return sender;
 }

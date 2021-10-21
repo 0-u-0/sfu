@@ -246,15 +246,15 @@ void SrtpTransport::OnRtpPacketReceived(rtc::CopyOnWriteBuffer packet,
   // DemuxPacket(std::move(packet), packet_time_us);
 
   packet_callback_list_.Send(std::move(packet));
-  RTC_LOG(INFO) << "!!!!";
+  // RTC_LOG(INFO) << "!!!!";
 }
 
 bool SrtpTransport::SendRtpPacket(const char* data2,
                                   size_t size,
                                   const rtc::PacketOptions& options) {
   auto packet = rtc::CopyOnWriteBuffer(data2, size);
-  
-  packet.EnsureCapacity(size+kMaxSrtpHmacOverhead);
+
+  packet.EnsureCapacity(size + kMaxSrtpHmacOverhead);
   // if (!IsSrtpActive()) {
   //   RTC_LOG(LS_ERROR)
   //       << "Failed to send the packet because SRTP transport is inactive.";

@@ -3,4 +3,3 @@
 BasedOnStyle: Chromium
 ---
 Language: Cpp
-IncludeBlocks: Regroup

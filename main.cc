@@ -9,9 +9,9 @@
 #include "webrtc_transport.h"
 
 int main(int, char**) {
-  rtc::tracing::SetupInternalTracer();
-  rtc::tracing::StartInternalCapture(
-      "/Users/congchen/workspace/dugon/dugon-sfu/event_trace.log");
+  // rtc::tracing::SetupInternalTracer();
+  // rtc::tracing::StartInternalCapture(
+  //     "/Users/congchen/workspace/dugon/dugon-sfu/event_trace.log");
 
   auto server_transport = new ServerTransport();
   server_transport->notify_callback_ = [](std::string method, json data) {
@@ -494,14 +494,14 @@ int main(int, char**) {
       if (direction == "sendonly") {
         auto webrtc = new WebrtcTransport(direction, ip, port);
 
-        auto rtp = new RtpTransport(ip, 12312);
-        webrtc->packet_callback_list_.AddReceiver(
-            [rtp](rtc::CopyOnWriteBuffer packet) {
-              rtp->SendPacket(std::move(packet));
-            });
+        // auto rtp = new RtpTransport(ip, 12312);
+        // webrtc->packet_callback_list_.AddReceiver(
+        //     [rtp](rtc::CopyOnWriteBuffer packet) {
+        //       rtp->SendPacket(std::move(packet));
+        //     });
 
-        rtp->SetRemoteAddress(ip, 30001);
-        rtp->Init();
+        // rtp->SetRemoteAddress(ip, 30001);
+        // rtp->Init();
 
         webrtc->Init();
         webrtc->SetLocalCertificate(cert);
@@ -592,6 +592,11 @@ int main(int, char**) {
 
       server_transport->Response(id, response);
     } else if (method == "publish") {
+      std::string transportId = data["transportId"];
+      auto t = transports[transportId];
+      auto* sender = t->CreateSender(data["codec"]);
+
+      response["senderId"] = sender->id_;
       server_transport->Response(id, response);
     }
   };
