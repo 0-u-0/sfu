@@ -53,10 +53,10 @@ rtc::StreamResult StreamInterfaceChannel::Read(void* buffer,
 
   if (state_ == rtc::SS_CLOSED) {
     return rtc::SR_EOS;
-}
+  }
   if (state_ == rtc::SS_OPENING) {
     return rtc::SR_BLOCK;
-}
+  }
 
   if (!packets_.ReadFront(buffer, buffer_len, read)) {
     return rtc::SR_BLOCK;
@@ -397,7 +397,7 @@ bool DtlsTransport::SetRemoteFingerprint(const std::string& digest_alg,
 void DtlsTransport::OnPacket(const char* data,
                              size_t size,
                              const int64_t packet_time_us) {
-  RTC_LOG(INFO) << "OnPacket";
+  // RTC_LOG(INFO) << "OnPacket";
   switch (dtls_state()) {
     case DTLS_TRANSPORT_NEW:
       if (dtls_) {
@@ -476,12 +476,12 @@ bool DtlsTransport::HandleDtlsPacket(const char* data, size_t size) {
   while (tmp_size > 0) {
     if (tmp_size < kDtlsRecordHeaderLen) {
       return false;  // Too short for the header
-}
+    }
 
     size_t record_len = (tmp_data[11] << 8) | (tmp_data[12]);
     if ((record_len + kDtlsRecordHeaderLen) > tmp_size) {
       return false;  // Body too short
-}
+    }
 
     tmp_data += record_len + kDtlsRecordHeaderLen;
     tmp_size -= record_len + kDtlsRecordHeaderLen;

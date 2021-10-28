@@ -5,9 +5,12 @@
 #include <type_traits>
 
 #include <api/transport/stun.h>
+#include <modules/rtp_rtcp/source/rtp_packet_received.h>
 #include <rtc_base/logging.h>
 #include <rtc_base/task_utils/to_queued_task.h>
 
+#include "modules/rtp_rtcp/include/rtp_rtcp_defines.h"
+#include "rtp_demuxer.h"
 #include "tools.h"
 
 using namespace cricket;
@@ -35,6 +38,8 @@ WebrtcTransport::WebrtcTransport(const std::string& direction,
     srtp->SetDtlsTransport(dtls_transport_);
     return srtp;
   });
+
+  rtp_demuxer_ = new RtpDemuxer();
 }
 
 void WebrtcTransport::Init() {
@@ -44,16 +49,22 @@ void WebrtcTransport::Init() {
       is_client = false;
     }
     packet_callback_list_.AddReceiver(
-        [](rtc::CopyOnWriteBuffer packet) { RTC_LOG(INFO) << "packet"; });
+        [this](rtc::CopyOnWriteBuffer packet) { OnPacket(packet); });
+
+    rtp_header_extensions_.RegisterByType(9, webrtc::kRtpExtensionMid);
+    rtp_header_extensions_.RegisterByType(10, webrtc::kRtpExtensionRtpStreamId);
+    rtp_header_extensions_.RegisterByType(
+        11, webrtc::kRtpExtensionRepairedRtpStreamId);
 
     dtls_transport_->Init(is_client);
     ice_transport_->Init();
   }));
 }
 
-void WebrtcTransport::OnPacket(const char* data,
-                               size_t size,
-                               const int64_t timestamp) {
+// -> network
+void WebrtcTransport::SendPacket(const char* data,
+                                 size_t size,
+                                 const int64_t timestamp) {
   auto packet = rtc::CopyOnWriteBuffer(data, size);
 
   thread_->PostTask(
@@ -64,6 +75,23 @@ void WebrtcTransport::OnPacket(const char* data,
             reinterpret_cast<const char*>(packet_copy.data()),
             packet_copy.size(), packet_options);
       }));
+}
+
+// network ->
+void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
+  webrtc::RtpPacketReceived packet;
+
+  if (!packet.Parse(buffer))
+    return;
+
+  packet.IdentifyExtensions(rtp_header_extensions_);
+
+  Sender* sender = rtp_demuxer_->ResolveSender(packet);
+  if (sender != nullptr) {
+    RTC_LOG(INFO) << "found sender";
+  }
+
+  // RTC_LOG(INFO) << "packet: " << packet.Ssrc();
 }
 
 bool WebrtcTransport::SetLocalCertificate(
@@ -80,8 +108,13 @@ bool WebrtcTransport::SetRemoteFingerprint(const std::string& algorithm,
   });
 }
 
-Sender* WebrtcTransport::CreateSender(json codec) {
-  auto* sender = new Sender();
-
+// TODO(CC): move to network thread
+Sender* WebrtcTransport::CreateSender(json& codec) {
+  auto* sender = new Sender(codec);
+  rtp_demuxer_->AddSender(sender);
   return sender;
 }
+
+Sender* WebrtcTransport::GetSender(uint32_t ssrc,
+                                   std::string mid,
+                                   std::string rid) {}

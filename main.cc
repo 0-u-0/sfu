@@ -510,7 +510,7 @@ int main(int, char**) {
         auto webrtc = new WebrtcTransport(direction, ip, port);
 
         auto rtp = new RtpTransport(ip, 12312);
-        rtp->SignalReadPacket.connect(webrtc, &WebrtcTransport::OnPacket);
+        rtp->SignalReadPacket.connect(webrtc, &WebrtcTransport::SendPacket);
 
         // rtp->SetRemoteAddress(ip, 30001);
         rtp->Init();

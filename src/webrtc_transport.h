@@ -5,10 +5,13 @@
 
 #include <rtc_base/callback_list.h>
 #include <rtc_base/thread.h>
+#include "modules/rtp_rtcp/include/rtp_header_extension_map.h"
+
 #include <json.hpp>
 
 #include "dtls_transport.h"
 #include "ice_transport.h"
+#include "rtp_demuxer.h"
 #include "sender.h"
 #include "srtp_transport.h"
 
@@ -28,9 +31,11 @@ class WebrtcTransport : public sigslot::has_slots<> {
   bool SetRemoteFingerprint(const std::string& algorithm,
                             const std::string& fingerprint);
 
-  void OnPacket(const char* data, size_t size, const int64_t timestamp);
+  void OnPacket(rtc::CopyOnWriteBuffer& packet);
+  void SendPacket(const char* data, size_t size, const int64_t timestamp);
 
-  Sender* CreateSender(json codec);
+  Sender* CreateSender(json& codec);
+  Sender* GetSender(uint32_t, std::string, std::string);
 
   std::unique_ptr<rtc::Thread> thread_;
 
@@ -40,6 +45,9 @@ class WebrtcTransport : public sigslot::has_slots<> {
   SrtpTransport* srtp_transport_;
 
   webrtc::CallbackList<rtc::CopyOnWriteBuffer> packet_callback_list_;
+
+  webrtc::RtpHeaderExtensionMap rtp_header_extensions_;
+  RtpDemuxer* rtp_demuxer_;
 };
 
 #endif /* SRC_WEBRTC_TRANSPORT_H_ */
