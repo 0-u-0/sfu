@@ -6,6 +6,7 @@
 
 #include <api/transport/stun.h>
 #include <modules/rtp_rtcp/source/rtp_packet_received.h>
+#include <rtc_base/helpers.h>
 #include <rtc_base/logging.h>
 #include <rtc_base/task_utils/to_queued_task.h>
 
@@ -17,7 +18,8 @@ using namespace cricket;
 
 WebrtcTransport::WebrtcTransport(const std::string& direction,
                                  const std::string& ip,
-                                 const int port) {
+                                 const int port)
+    : id_(rtc::CreateRandomUuid()) {
   direction_ = direction;
   thread_ = rtc::Thread::CreateWithSocketServer();
   thread_->Start();
@@ -89,6 +91,7 @@ void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
   Sender* sender = rtp_demuxer_->ResolveSender(packet);
   if (sender != nullptr) {
     RTC_LOG(INFO) << "found sender";
+    sender->OnRtpPacket(packet);
   }
 
   // RTC_LOG(INFO) << "packet: " << packet.Ssrc();
@@ -111,6 +114,7 @@ bool WebrtcTransport::SetRemoteFingerprint(const std::string& algorithm,
 // TODO(CC): move to network thread
 Sender* WebrtcTransport::CreateSender(json& codec) {
   auto* sender = new Sender(codec);
+  sender->SignalReadPacket.connect(this, &WebrtcTransport::OnSenderPacket);
   rtp_demuxer_->AddSender(sender);
   return sender;
 }
@@ -118,3 +122,10 @@ Sender* WebrtcTransport::CreateSender(json& codec) {
 Sender* WebrtcTransport::GetSender(uint32_t ssrc,
                                    std::string mid,
                                    std::string rid) {}
+
+void WebrtcTransport::OnSenderPacket(Sender* sender,
+                                     webrtc::RtpPacketReceived& packet) {
+  RTC_LOG(INFO) << "sender packet";
+
+  SignalReadPacket(sender, packet);
+}

@@ -6,6 +6,8 @@
 #include "rtc_base/ssl_fingerprint.h"
 #include "rtp_transport.h"
 #include "server_transport.h"
+
+#include "session.h"
 #include "webrtc_transport.h"
 
 int main(int, char**) {
@@ -18,13 +20,12 @@ int main(int, char**) {
 
   };
 
-  std::map<std::string, WebrtcTransport*> transports;
-  std::string tid = "abc";
+  Session* session = new Session;
+
   std::string ip = "127.0.0.1";
-  int port = 41812;
-  server_transport->request_callback_ = [server_transport, &transports, tid, ip,
-                                         port](int id, std::string method,
-                                               json data) {
+  server_transport->request_callback_ = [server_transport, &session, ip](
+                                            int id, std::string method,
+                                            json data) {
     std::cout << "get request " << method << std::endl;
     json response;
     if (method == "join") {
@@ -491,8 +492,13 @@ int main(int, char**) {
       std::unique_ptr<rtc::SSLFingerprint> fingerprint =
           rtc::SSLFingerprint::CreateFromCertificate(*cert);
 
+      WebrtcTransport* webrtc;
+
+      int port;
       if (direction == "sendonly") {
-        auto webrtc = new WebrtcTransport(direction, ip, port);
+        port = 41812;
+
+        webrtc = session->CreateWebrtcTransport(direction, ip, port);
 
         // auto rtp = new RtpTransport(ip, 12312);
         // webrtc->packet_callback_list_.AddReceiver(
@@ -505,19 +511,13 @@ int main(int, char**) {
 
         webrtc->Init();
         webrtc->SetLocalCertificate(cert);
-        transports[tid] = webrtc;
       } else {
-        auto webrtc = new WebrtcTransport(direction, ip, port);
+        port = 41813;
 
-        auto rtp = new RtpTransport(ip, 12312);
-        rtp->SignalReadPacket.connect(webrtc, &WebrtcTransport::SendPacket);
-
-        // rtp->SetRemoteAddress(ip, 30001);
-        rtp->Init();
+        webrtc = session->CreateWebrtcTransport(direction, ip, port);
 
         webrtc->Init();
         webrtc->SetLocalCertificate(cert);
-        transports[tid] = webrtc;
       }
 
       auto dtlsParameters = json::object();
@@ -546,12 +546,12 @@ int main(int, char**) {
       response["dtlsParameters"] = dtlsParameters;
       response["iceCandidates"] = iceCandidates;
       response["iceParameters"] = iceParameters;
-      response["id"] = tid;
+      response["id"] = webrtc->id_;
 
       server_transport->Response(id, response);
     } else if (method == "dtls") {
       std::string transportId = data["transportId"];
-      auto t = transports[transportId];
+      auto t = session->transports[transportId];
 
       json dtlsParameters = data["dtlsParameters"];
       json fingerprint = dtlsParameters["fingerprint"];
@@ -588,12 +588,12 @@ int main(int, char**) {
       response["codec"] = codec;
       response["receiverId"] = "c84295cd-411c-4e05-9131-199982392d6d";
       response["senderId"] = "a72992de-71d1-4c2f-9406-d2a05d2007d0";
-      response["id"] = tid;
+      response["id"] = "tid";
 
       server_transport->Response(id, response);
     } else if (method == "publish") {
       std::string transportId = data["transportId"];
-      auto t = transports[transportId];
+      auto t = session->transports[transportId];
       auto* sender = t->CreateSender(data["codec"]);
 
       response["senderId"] = sender->id_;

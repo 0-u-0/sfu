@@ -4,12 +4,13 @@
 #include <json.hpp>
 
 #include <modules/rtp_rtcp/source/rtp_packet_received.h>
+#include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include "media_types.h"
 
 using json = nlohmann::json;
 
-class Sender {
+class Sender : public sigslot::has_slots<> {
  public:
   Sender(json& codec);
   const std::string id_;
@@ -20,7 +21,9 @@ class Sender {
 
   MediaType kind_;
 
-  void OnRtpPacket(const webrtc::RtpPacketReceived& packet);
+  sigslot::signal2<Sender*, webrtc::RtpPacketReceived&> SignalReadPacket;
+
+  void OnRtpPacket(webrtc::RtpPacketReceived& packet);
 };
 
 #endif /* SRC_SENDER_H_ */

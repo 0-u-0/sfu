@@ -12,4 +12,6 @@ Sender::Sender(json& codec) : id_(rtc::CreateRandomUuid()) {
   }
 }
 
-void Sender::OnRtpPacket(const webrtc::RtpPacketReceived& packet) {}
+void Sender::OnRtpPacket(webrtc::RtpPacketReceived& packet) {
+  SignalReadPacket(this, packet);
+}
