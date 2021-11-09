@@ -11,6 +11,7 @@
 #include <rtc_base/task_utils/to_queued_task.h>
 
 #include "modules/rtp_rtcp/include/rtp_rtcp_defines.h"
+#include "receiver.h"
 #include "rtp_demuxer.h"
 #include "tools.h"
 
@@ -114,6 +115,8 @@ bool WebrtcTransport::SetRemoteFingerprint(const std::string& algorithm,
 // TODO(CC): move to network thread
 Sender* WebrtcTransport::CreateSender(json& codec) {
   auto* sender = new Sender(codec);
+  this->mapSender[sender->id_] = sender;
+  this->mapSenderReceiver[sender];
   sender->SignalReadPacket.connect(this, &WebrtcTransport::OnSenderPacket);
   rtp_demuxer_->AddSender(sender);
   return sender;
@@ -125,7 +128,27 @@ Sender* WebrtcTransport::GetSender(uint32_t ssrc,
 
 void WebrtcTransport::OnSenderPacket(Sender* sender,
                                      webrtc::RtpPacketReceived& packet) {
-  RTC_LOG(INFO) << "sender packet";
+  RTC_LOG(INFO) << "sender packet: " << sender->id_;
 
-  SignalReadPacket(sender, packet);
+  auto& receivers = this->mapSenderReceiver.at(sender);
+
+  for (auto* receiver : receivers) {
+    receiver->OnSenderPacket(sender, packet);
+  }
+
+  // SignalReadPacket(sender, packet);
+}
+
+Receiver* WebrtcTransport::CreateReceiver() {
+  auto receiver = new Receiver();
+  return receiver;
+}
+
+void WebrtcTransport::AddReceiverToSender(std::string senderId,
+                                          Receiver* receiver) {
+  RTC_LOG(INFO) << "add receiver " << receiver->id_ << " to " << senderId;
+
+  auto* sender = this->mapSender[senderId];
+  auto& receivers = this->mapSenderReceiver[sender];
+  receivers.insert(receiver);
 }

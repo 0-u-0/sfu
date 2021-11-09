@@ -585,10 +585,18 @@ int main(int, char**) {
           "102,\"ssrc\":134172938},\"senderPaused\":false,\"ssrc\":489788816}";
       auto codec = json::parse(codec_str);
 
+      std::string senderId = data["senderId"];
+      std::string transportId = data["transportId"];
+      std::string remoteTransportId = data["remoteTransportId"];
+
+      auto t = session->transports[transportId];
+      auto receiver = t->CreateReceiver();
+
+      auto remoteTransport = session->transports[remoteTransportId];
+      remoteTransport->AddReceiverToSender(senderId, receiver);
+
       response["codec"] = codec;
-      response["receiverId"] = "c84295cd-411c-4e05-9131-199982392d6d";
-      response["senderId"] = "a72992de-71d1-4c2f-9406-d2a05d2007d0";
-      response["id"] = "tid";
+      response["id"] = receiver->id_;
 
       server_transport->Response(id, response);
     } else if (method == "publish") {

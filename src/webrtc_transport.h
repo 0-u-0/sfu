@@ -11,6 +11,7 @@
 
 #include "dtls_transport.h"
 #include "ice_transport.h"
+#include "receiver.h"
 #include "rtp_demuxer.h"
 #include "sender.h"
 #include "srtp_transport.h"
@@ -40,6 +41,9 @@ class WebrtcTransport : public sigslot::has_slots<> {
   Sender* CreateSender(json& codec);
   Sender* GetSender(uint32_t, std::string, std::string);
 
+  Receiver* CreateReceiver();
+  void AddReceiverToSender(std::string senderId, Receiver* receiver);
+
   const std::string id_;
 
   std::unique_ptr<rtc::Thread> thread_;
@@ -53,6 +57,9 @@ class WebrtcTransport : public sigslot::has_slots<> {
 
   webrtc::RtpHeaderExtensionMap rtp_header_extensions_;
   RtpDemuxer* rtp_demuxer_;
+
+  std::unordered_map<std::string, Sender*> mapSender;
+  std::unordered_map<Sender*, std::unordered_set<Receiver*>> mapSenderReceiver;
 };
 
 #endif /* SRC_WEBRTC_TRANSPORT_H_ */
