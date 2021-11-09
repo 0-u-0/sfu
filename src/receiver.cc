@@ -6,6 +6,8 @@
 
 Receiver::Receiver() : id_(rtc::CreateRandomUuid()) {}
 
-void Receiver::OnSenderPacket(Sender*, webrtc::RtpPacketReceived&) {
+void Receiver::OnSenderPacket(Sender*, webrtc::RtpPacketReceived& packet) {
   RTC_LOG(INFO) << "receiver on packet";
+
+  SignalReadPacket(this, packet);
 }

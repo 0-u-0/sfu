@@ -36,6 +36,7 @@ class WebrtcTransport : public sigslot::has_slots<> {
   void SendPacket(const char* data, size_t size, const int64_t timestamp);
 
   void OnSenderPacket(Sender*, webrtc::RtpPacketReceived&);
+  void OnReceiverPacket(Receiver*, webrtc::RtpPacketReceived&);
   sigslot::signal2<Sender*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
   Sender* CreateSender(json& codec);

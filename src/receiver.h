@@ -5,10 +5,12 @@
 
 #include "sender.h"
 
-class Receiver {
+class Receiver : public sigslot::has_slots<> {
  public:
   Receiver();
   void OnSenderPacket(Sender*, webrtc::RtpPacketReceived&);
+
+  sigslot::signal2<Receiver*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
   const std::string id_;
 };

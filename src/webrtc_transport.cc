@@ -141,7 +141,16 @@ void WebrtcTransport::OnSenderPacket(Sender* sender,
 
 Receiver* WebrtcTransport::CreateReceiver() {
   auto receiver = new Receiver();
+  receiver->SignalReadPacket.connect(this, &WebrtcTransport::OnReceiverPacket);
   return receiver;
+}
+
+void WebrtcTransport::OnReceiverPacket(Receiver* receiver,
+                                       webrtc::RtpPacketReceived& packet) {
+  // RTC_LOG(INFO) << "receiver packet: ";
+
+  // SendPacket(const char *data, size_t size, const int64_t timestamp)
+  // SignalReadPacket(sender, packet);
 }
 
 void WebrtcTransport::AddReceiverToSender(std::string senderId,
