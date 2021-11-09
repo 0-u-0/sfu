@@ -598,6 +598,17 @@ int main(int, char**) {
 
       response["senderId"] = sender->id_;
       server_transport->Response(id, response);
+      // notify
+      json notify_data;
+
+      notify_data["area"] = "jp";
+      notify_data["host"] = "tokyo1";
+      notify_data["mediaId"] = "foo";
+      notify_data["senderId"] = sender->id_;
+      notify_data["tokenId"] = "abc";
+      notify_data["transportId"] = transportId;
+
+      server_transport->Notify("publish", notify_data);
     }
   };
 

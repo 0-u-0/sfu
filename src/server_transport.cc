@@ -21,7 +21,7 @@ ServerTransport::ServerTransport() {
   server_ = new server();
 }
 
-void ServerTransport::Response(int id, json data) {
+void ServerTransport::Response(int id, json& data) {
   json requestMes;
 
   requestMes["id"] = id;
@@ -29,6 +29,18 @@ void ServerTransport::Response(int id, json data) {
   requestMes["type"] = "response";
 
   const std::string mes = requestMes.dump();
+
+  Send(mes);
+}
+
+void ServerTransport::Notify(const std::string& method, json& data) {
+  json notifyMes;
+
+  notifyMes["method"] = method;
+  notifyMes["data"] = data;
+  notifyMes["type"] = "notify";
+
+  const std::string mes = notifyMes.dump();
 
   Send(mes);
 }
