@@ -565,6 +565,17 @@ int main(int, char**) {
 
       server_transport->Response(id, response);
     } else if (method == "subscribe") {
+      std::string senderId = data["senderId"];
+      std::string transportId = data["transportId"];
+      std::string remoteTransportId = data["remoteTransportId"];
+
+      auto t = session->transports[transportId];
+      auto receiver = t->CreateReceiver();
+
+      auto remoteTransport = session->transports[remoteTransportId];
+      auto& sender = remoteTransport->mapSender[senderId];
+      remoteTransport->AddReceiverToSender(senderId, receiver);
+
       std::string codec_str =
           "{\"channels\":1,\"clockRate\":90000,\"cname\":\"qGQTLKrHBlhpw7P1\","
           "\"codecFullName\":\"VP8\",\"codecName\":\"VP8\",\"dtx\":false,"
@@ -578,22 +589,13 @@ int main(int, char**) {
           "params:rtp-hdrext:framemarking\"},{\"id\":11,\"uri\":\"urn:3gpp:"
           "video-orientation\"},{\"id\":12,\"uri\":\"urn:ietf:params:rtp-"
           "hdrext:toffset\"}],\"kind\":\"video\",\"mux\":true,\"parameters\":{}"
-          ",\"payload\":101,\"reducedSize\":true,\"rtcpFeedback\":[{"
+          ",\"payload\":96,\"reducedSize\":true,\"rtcpFeedback\":[{"
           "\"parameter\":\"\",\"type\":\"nack\"},{\"parameter\":\"pli\","
           "\"type\":\"nack\"},{\"parameter\":\"fir\",\"type\":\"ccm\"},{"
           "\"parameter\":\"\",\"type\":\"transport-cc\"}],\"rtx\":{\"payload\":"
-          "102,\"ssrc\":134172938},\"senderPaused\":false,\"ssrc\":489788816}";
+          "102,\"ssrc\":134172938},\"senderPaused\":false,\"ssrc\":" +
+          std::to_string(sender->ssrc_) + "}";
       auto codec = json::parse(codec_str);
-
-      std::string senderId = data["senderId"];
-      std::string transportId = data["transportId"];
-      std::string remoteTransportId = data["remoteTransportId"];
-
-      auto t = session->transports[transportId];
-      auto receiver = t->CreateReceiver();
-
-      auto remoteTransport = session->transports[remoteTransportId];
-      remoteTransport->AddReceiverToSender(senderId, receiver);
 
       response["codec"] = codec;
       response["id"] = receiver->id_;

@@ -80,6 +80,19 @@ void WebrtcTransport::SendPacket(const char* data,
       }));
 }
 
+void WebrtcTransport::SendPacket(webrtc::RtpPacketReceived& received_packet) {
+  auto packet = rtc::CopyOnWriteBuffer(received_packet.Buffer());
+
+  thread_->PostTask(
+      webrtc::ToQueuedTask([this, packet_copy = std::move(packet)]() {
+        rtc::PacketOptions packet_options;
+
+        srtp_transport_->SendRtpPacket(
+            reinterpret_cast<const char*>(packet_copy.data()),
+            packet_copy.size(), packet_options);
+      }));
+}
+
 // network ->
 void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
   webrtc::RtpPacketReceived packet;
@@ -149,6 +162,7 @@ void WebrtcTransport::OnReceiverPacket(Receiver* receiver,
                                        webrtc::RtpPacketReceived& packet) {
   // RTC_LOG(INFO) << "receiver packet: ";
 
+  SendPacket(packet);
   // SendPacket(const char *data, size_t size, const int64_t timestamp)
   // SignalReadPacket(sender, packet);
 }

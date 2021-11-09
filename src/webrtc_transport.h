@@ -34,6 +34,7 @@ class WebrtcTransport : public sigslot::has_slots<> {
 
   void OnPacket(rtc::CopyOnWriteBuffer& packet);
   void SendPacket(const char* data, size_t size, const int64_t timestamp);
+  void SendPacket(webrtc::RtpPacketReceived& packet);
 
   void OnSenderPacket(Sender*, webrtc::RtpPacketReceived&);
   void OnReceiverPacket(Receiver*, webrtc::RtpPacketReceived&);
