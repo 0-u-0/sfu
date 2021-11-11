@@ -30,7 +30,7 @@ void UdpTransport::OnPacket(rtc::AsyncPacketSocket* socket,
                             const rtc::SocketAddress& addr,
                             const int64_t& timestamp) {
   ELOG_DEBUG("Get data from %s", addr.ToString().c_str());
-  SignalReadPacket(data, size, addr, timestamp);
+  emit_packet_(data, size, addr, timestamp);
 }
 
 void UdpTransport::SendPacket(const uint8_t* data, size_t size) {

@@ -119,7 +119,7 @@ DtlsTransport::DtlsTransport(IceTransport* ice_transport,
       ssl_max_version_(max_version) {}
 
 void DtlsTransport::Init(bool is_client) {
-  ice_transport_->SignalReadPacket.connect(this, &DtlsTransport::OnPacket);
+  ice_transport_->emit_packet_.connect(this, &DtlsTransport::OnPacket);
   // ice_transport_->Init();
   // FIXME(CC): set by webrtc transport?
   if (is_client) {

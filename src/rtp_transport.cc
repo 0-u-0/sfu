@@ -16,7 +16,7 @@ RtpTransport::RtpTransport(const std::string& ip, const int port) {
 void RtpTransport::Init() {
   thread_->PostTask(webrtc::ToQueuedTask([this]() {
     udp_transport_->Init();
-    udp_transport_->SignalReadPacket.connect(this, &RtpTransport::OnPacket);
+    udp_transport_->emit_packet_.connect(this, &RtpTransport::OnPacket);
   }));
 }
 

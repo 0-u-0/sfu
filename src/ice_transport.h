@@ -31,7 +31,7 @@ class IceTransport : public sigslot::has_slots<> {
 
   bool writable() { return true; };
 
-  sigslot::signal3<const char*, size_t, const int64_t> SignalReadPacket;
+  sigslot::signal3<const char*, size_t, const int64_t> emit_packet_;
 
   // variable
   std::string local_ufrag_;

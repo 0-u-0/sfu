@@ -58,7 +58,7 @@ IceTransport::IceTransport(const std::string& ip, const int port) {
 }
 
 void IceTransport::Init() {
-  udp_transport_->SignalReadPacket.connect(this, &IceTransport::OnPacket);
+  udp_transport_->emit_packet_.connect(this, &IceTransport::OnPacket);
   udp_transport_->Init();
 }
 
@@ -125,7 +125,7 @@ void IceTransport::OnPacket(const char* data,
       udp_transport_->SetRemoteAddress(addr);
     }
   } else {
-    SignalReadPacket(data, size, timestamp);
+    emit_packet_(data, size, timestamp);
   }
 }
 
