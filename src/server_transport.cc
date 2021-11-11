@@ -1,12 +1,13 @@
 
 #include "server_transport.h"
 
-#include <cstdio>
 #include <iostream>
 
 using websocketpp::lib::bind;
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
+
+using namespace std;
 
 bool validate_func_subprotocol(server* s,
                                std::string* out,
@@ -26,30 +27,6 @@ void ServerTransport::Response(int id, json& data) {
 
   requestMes["id"] = id;
   requestMes["data"] = data;
-  requestMes["type"] = "response";
-
-  const std::string mes = requestMes.dump();
-
-  Send(mes);
-}
-
-void ServerTransport::Notify(const std::string& method, json& data) {
-  json notifyMes;
-
-  notifyMes["method"] = method;
-  notifyMes["data"] = data;
-  notifyMes["type"] = "notify";
-
-  const std::string mes = notifyMes.dump();
-
-  Send(mes);
-}
-
-void ServerTransport::Response(int id) {
-  json requestMes;
-
-  requestMes["id"] = id;
-  requestMes["data"] = json::object();
   requestMes["response"] = true;
   requestMes["ok"] = true;
 
@@ -63,7 +40,7 @@ void ServerTransport::Send(const std::string& message) {
 }
 
 void ServerTransport::Init(int port) {
-  {
+  try {
     // Set logging settings
     server_->set_access_channels(websocketpp::log::alevel::none);
     // server_->clear_access_channels(websocketpp::log::alevel::frame_payload);
@@ -73,9 +50,8 @@ void ServerTransport::Init(int port) {
 
     std::string validate;
 
-    // server_->set_validate_handler(
-    //     bind(&validate_func_subprotocol, server_, &validate, "protoo",
-    //     ::_1));
+    server_->set_validate_handler(
+        bind(&validate_func_subprotocol, server_, &validate, "protoo", ::_1));
 
     // Register our message handler
     server_->set_message_handler(bind(
@@ -99,32 +75,42 @@ void ServerTransport::Init(int port) {
           // }
 
           if (msg->get_opcode() == websocketpp::frame::opcode::text) {
-            auto request_string = msg->get_payload();
-            json request_json = json::parse(request_string);
-            json type_json = request_json["type"];
+            auto responseStr = msg->get_payload();
+            json response = json::parse(responseStr);
 
-            if (type_json.is_string()) {
-              std::string type = type_json.get<std::string>();
+            if (response["response"].is_boolean()) {
+              bool isResponse = response["response"];
+              if (isResponse) {
+                int id = response["id"];
 
-              if (type == "request") {
-                json id_json = request_json["id"];
-                json method_json = request_json["method"];
-                json data = request_json["data"];
-
-                if (id_json.is_number_integer() && method_json.is_string() &&
-                    data.is_object()) {
-                  int id = id_json.get<int>();  // TODO(CC): check id
-
-                  std::string method = method_json.get<std::string>();
-
-                  if (request_callback_) {
-                    request_callback_(id, method, data);
-                  }
+                json data = response["data"];
+                auto p = queue_[id];
+                if (p) {
+                  p->set_value(data);
+                  queue_.erase(id);
                 }
               }
 
-            } else {
-              // TODO(CC): error
+            } else if (response["notification"].is_boolean()) {
+              bool isNotify = response["notification"];
+              if (isNotify) {
+                std::string method = response["method"];
+                json data = response["data"];
+
+                if (notify_callback_ != nullptr)
+                  notify_callback_(method, data);
+              }
+            } else if (response["request"].is_boolean()) {
+              bool isRequest = response["request"];
+
+              if (isRequest) {
+                std::string method = response["method"];
+                json data = response["data"];
+                int id = response["id"];
+                if (request_callback_) {
+                  request_callback_(id, method, data);
+                }
+              }
             }
           }
         },
@@ -138,10 +124,11 @@ void ServerTransport::Init(int port) {
 
     // Start the ASIO io_service run loop
     server_->run();
+  } catch (websocketpp::exception const& e) {
+    std::cout << e.what() << std::endl;
+  } catch (...) {
+    std::cout << "other exception" << std::endl;
   }
-  // catch (websocketpp::exception const &e) {
-  //   std::cout << e.what() << std::endl;
-  // } catch (...) {
-  //   std::cout << "other exception" << std::endl;
-  // }
 }
+
+void ServerTransport::Notify(const std::string& method, json& data) {}

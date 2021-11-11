@@ -23,13 +23,12 @@ int main(int, char**) {
   Session* session = new Session;
 
   std::string ip = "127.0.0.1";
-  server_transport->request_callback_ = [server_transport, &session, ip](
-                                            int id, std::string method,
-                                            json data) {
-    std::cout << "get request " << method << std::endl;
-    json response;
-    if (method == "join") {
-      std::string codec_str = R"({
+  server_transport->request_callback_ =
+      [server_transport, &session, ip](int id, std::string method, json data) {
+        std::cout << "get request " << method << std::endl;
+        json response;
+        if (method == "join") {
+          std::string codec_str = R"({
       "H264-CONSTRAINED-BASELINE": {
         "channels": 1,
         "clockRate": 90000,
@@ -470,157 +469,227 @@ int main(int, char**) {
         "ssrc": null
       }
       })";
-      auto codecs = json::parse(codec_str);
+          auto codecs = json::parse(codec_str);
 
-      response["codecs"] = codecs;
+          response["codecs"] = codecs;
 
-      server_transport->Response(id, response);
-    } else if (method == "createTransport") {
-      // std::unique_ptr<rtc::SSLFingerprint> fingerprint =
-      //       rtc::SSLFingerprint::CreateFromCertificate(*cert);
-      //   if (modify_digest) {
-      //     ++fingerprint->digest.MutableData()[0];
-      //   }
-      //   // Even if digest is verified to be incorrect, should fail
-      //   asynchrnously. EXPECT_TRUE(transport->SetRemoteFingerprint(
-      //       fingerprint->algorithm,
-      //       reinterpret_cast<const uint8_t*>(fingerprint->digest.data()),
-      //       fingerprint->digest.size()));
-      std::string direction = data["direction"];
+          server_transport->Response(id, response);
+        } else if (method == "createTransport") {
+          // std::unique_ptr<rtc::SSLFingerprint> fingerprint =
+          //       rtc::SSLFingerprint::CreateFromCertificate(*cert);
+          //   if (modify_digest) {
+          //     ++fingerprint->digest.MutableData()[0];
+          //   }
+          //   // Even if digest is verified to be incorrect, should fail
+          //   asynchrnously. EXPECT_TRUE(transport->SetRemoteFingerprint(
+          //       fingerprint->algorithm,
+          //       reinterpret_cast<const uint8_t*>(fingerprint->digest.data()),
+          //       fingerprint->digest.size()));
+          std::string direction = data["direction"];
 
-      auto cert = DtlsTransport::certificate();
-      std::unique_ptr<rtc::SSLFingerprint> fingerprint =
-          rtc::SSLFingerprint::CreateFromCertificate(*cert);
+          auto cert = DtlsTransport::certificate();
+          std::unique_ptr<rtc::SSLFingerprint> fingerprint =
+              rtc::SSLFingerprint::CreateFromCertificate(*cert);
 
-      WebrtcTransport* webrtc;
+          WebrtcTransport* webrtc;
 
-      int port;
-      if (direction == "sendonly") {
-        port = 41812;
+          int port;
+          if (direction == "sendonly") {
+            port = 41812;
 
-        webrtc = session->CreateWebrtcTransport(direction, ip, port);
+            webrtc = session->CreateWebrtcTransport(direction, ip, port);
 
-        // auto rtp = new RtpTransport(ip, 12312);
-        // webrtc->packet_callback_list_.AddReceiver(
-        //     [rtp](rtc::CopyOnWriteBuffer packet) {
-        //       rtp->SendPacket(std::move(packet));
-        //     });
+            // auto rtp = new RtpTransport(ip, 12312);
+            // webrtc->packet_callback_list_.AddReceiver(
+            //     [rtp](rtc::CopyOnWriteBuffer packet) {
+            //       rtp->SendPacket(std::move(packet));
+            //     });
 
-        // rtp->SetRemoteAddress(ip, 30001);
-        // rtp->Init();
+            // rtp->SetRemoteAddress(ip, 30001);
+            // rtp->Init();
 
-        webrtc->Init();
-        webrtc->SetLocalCertificate(cert);
-      } else {
-        port = 41813;
+            webrtc->Init();
+            webrtc->SetLocalCertificate(cert);
+          } else {
+            port = 41813;
 
-        webrtc = session->CreateWebrtcTransport(direction, ip, port);
+            webrtc = session->CreateWebrtcTransport(direction, ip, port);
 
-        webrtc->Init();
-        webrtc->SetLocalCertificate(cert);
-      }
+            webrtc->Init();
+            webrtc->SetLocalCertificate(cert);
+          }
 
-      auto dtlsParameters = json::object();
-      dtlsParameters["algorithm"] = fingerprint->algorithm;
-      dtlsParameters["setup"] = "active";
-      dtlsParameters["value"] = fingerprint->GetRfc4572Fingerprint();
+          auto dtlsParameters = json::object();
+          json::array_t fingerprints = json::array();
 
-      auto iceParameters = json::object();
-      iceParameters["iceLite"] = true;
-      iceParameters["password"] = "sufhzdkdibm2u1nml7gmo29mbsvf7i07";
-      iceParameters["usernameFragment"] = "vtucikb05exh1wax";
+          json fp;
+          fp["algorithm"] = fingerprint->algorithm;
+          fp["value"] = fingerprint->GetRfc4572Fingerprint();
 
-      auto iceCandidates = json::array();
-      auto candidate = json::object();
+          fingerprints.push_back(fp);
+          dtlsParameters["fingerprints"] = fingerprints;
+          dtlsParameters["role"] = "server";
 
-      candidate["component"] = 1;
-      candidate["foundation"] = "udpcandidate";
-      candidate["ip"] = ip;
-      candidate["port"] = port;
-      candidate["priority"] = "1076302079";
-      candidate["transport"] = "udp";
-      candidate["type"] = "host";
+          auto iceParameters = json::object();
+          iceParameters["iceLite"] = true;
+          iceParameters["password"] = "sufhzdkdibm2u1nml7gmo29mbsvf7i07";
+          iceParameters["usernameFragment"] = "vtucikb05exh1wax";
 
-      iceCandidates.push_back(candidate);
+          auto iceCandidates = json::array();
+          auto candidate = json::object();
 
-      response["dtlsParameters"] = dtlsParameters;
-      response["iceCandidates"] = iceCandidates;
-      response["iceParameters"] = iceParameters;
-      response["id"] = webrtc->id_;
+          candidate["component"] = 1;
+          candidate["foundation"] = "udpcandidate";
+          candidate["ip"] = ip;
+          candidate["port"] = port;
+          candidate["priority"] = "1076302079";
+          candidate["protocol"] = "udp";
+          candidate["type"] = "host";
 
-      server_transport->Response(id, response);
-    } else if (method == "dtls") {
-      std::string transportId = data["transportId"];
-      auto t = session->transports[transportId];
+          iceCandidates.push_back(candidate);
 
-      json dtlsParameters = data["dtlsParameters"];
-      json fingerprint = dtlsParameters["fingerprint"];
-      std::string algorithm = fingerprint["algorithm"];
-      std::string value = fingerprint["value"];
+          response["dtlsParameters"] = dtlsParameters;
+          response["iceCandidates"] = iceCandidates;
+          response["iceParameters"] = iceParameters;
+          response["id"] = webrtc->id_;
 
-      // fingerprint->algorithm,
-      //       reinterpret_cast<const uint8_t*>(fingerprint->digest.data()),
-      //       fingerprint->digest.size())
-      t->SetRemoteFingerprint(algorithm, value);
+          server_transport->Response(id, response);
+        } else if (method == "dtls") {
+          std::string transportId = data["transportId"];
+          auto t = session->transports[transportId];
 
-      server_transport->Response(id, response);
-    } else if (method == "subscribe") {
-      std::string senderId = data["senderId"];
-      std::string transportId = data["transportId"];
-      std::string remoteTransportId = data["remoteTransportId"];
+          json dtlsParameters = data["dtlsParameters"];
+          json fingerprint = dtlsParameters["fingerprint"];
+          std::string algorithm = fingerprint["algorithm"];
+          std::string value = fingerprint["value"];
 
-      auto t = session->transports[transportId];
-      auto receiver = t->CreateReceiver();
+          // fingerprint->algorithm,
+          //       reinterpret_cast<const uint8_t*>(fingerprint->digest.data()),
+          //       fingerprint->digest.size())
+          t->SetRemoteFingerprint(algorithm, value);
 
-      auto remoteTransport = session->transports[remoteTransportId];
-      auto& sender = remoteTransport->mapSender[senderId];
-      remoteTransport->AddReceiverToSender(senderId, receiver);
+          server_transport->Response(id, response);
+        } else if (method == "subscribe") {
+          std::string senderId = data["senderId"];
+          std::string transportId = data["transportId"];
+          std::string remoteTransportId = data["remoteTransportId"];
 
-      std::string codec_str =
-          "{\"channels\":1,\"clockRate\":90000,\"cname\":\"qGQTLKrHBlhpw7P1\","
-          "\"codecFullName\":\"VP8\",\"codecName\":\"VP8\",\"dtx\":false,"
-          "\"extensions\":[{\"id\":1,\"uri\":\"urn:ietf:params:rtp-hdrext:sdes:"
-          "mid\"},{\"id\":4,\"uri\":\"http://www.webrtc.org/experiments/"
-          "rtp-hdrext/abs-send-time\"},{\"id\":5,\"uri\":\"http://www.ietf.org/"
-          "id/"
-          "draft-holmer-rmcat-transport-wide-cc-extensions-01\"},{\"id\":6,"
-          "\"uri\":\"http://tools.ietf.org/html/"
-          "draft-ietf-avtext-framemarking-07\"},{\"id\":7,\"uri\":\"urn:ietf:"
-          "params:rtp-hdrext:framemarking\"},{\"id\":11,\"uri\":\"urn:3gpp:"
-          "video-orientation\"},{\"id\":12,\"uri\":\"urn:ietf:params:rtp-"
-          "hdrext:toffset\"}],\"kind\":\"video\",\"mux\":true,\"parameters\":{}"
-          ",\"payload\":96,\"reducedSize\":true,\"rtcpFeedback\":[{"
-          "\"parameter\":\"\",\"type\":\"nack\"},{\"parameter\":\"pli\","
-          "\"type\":\"nack\"},{\"parameter\":\"fir\",\"type\":\"ccm\"},{"
-          "\"parameter\":\"\",\"type\":\"transport-cc\"}],\"rtx\":{\"payload\":"
-          "102,\"ssrc\":134172938},\"senderPaused\":false,\"ssrc\":" +
-          std::to_string(sender->ssrc_) + "}";
-      auto codec = json::parse(codec_str);
+          auto t = session->transports[transportId];
+          auto receiver = t->CreateReceiver();
 
-      response["codec"] = codec;
-      response["id"] = receiver->id_;
+          auto remoteTransport = session->transports[remoteTransportId];
+          auto& sender = remoteTransport->mapSender[senderId];
+          remoteTransport->AddReceiverToSender(senderId, receiver);
 
-      server_transport->Response(id, response);
-    } else if (method == "publish") {
-      std::string transportId = data["transportId"];
-      auto t = session->transports[transportId];
-      auto* sender = t->CreateSender(data["codec"]);
+          std::string codec_str = R"({
+            "codecs": [
+              {
+                "mimeType": "video/VP8",
+                "payloadType": 101,
+                "clockRate": 90000,
+                "parameters": {},
+                "rtcpFeedback": [
+                  {
+                    "type": "transport-cc",
+                    "parameter": ""
+                  },
+                  {
+                    "type": "ccm",
+                    "parameter": "fir"
+                  },
+                  {
+                    "type": "nack",
+                    "parameter": ""
+                  },
+                  {
+                    "type": "nack",
+                    "parameter": "pli"
+                  }
+                ]
+              },
+              {
+                "mimeType": "video/rtx",
+                "payloadType": 102,
+                "clockRate": 90000,
+                "parameters": {
+                  "apt": 101
+                },
+                "rtcpFeedback": []
+              }
+            ],
+            "headerExtensions": [
+              {
+                "uri": "urn:ietf:params:rtp-hdrext:sdes:mid",
+                "id": 1,
+                "encrypt": false,
+                "parameters": {}
+              },
+              {
+                "uri": "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
+                "id": 4,
+                "encrypt": false,
+                "parameters": {}
+              },
+              {
+                "uri": "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01",
+                "id": 5,
+                "encrypt": false,
+                "parameters": {}
+              },
+              {
+                "uri": "urn:3gpp:video-orientation",
+                "id": 11,
+                "encrypt": false,
+                "parameters": {}
+              },
+              {
+                "uri": "urn:ietf:params:rtp-hdrext:toffset",
+                "id": 12,
+                "encrypt": false,
+                "parameters": {}
+              }
+            ],
+            "encodings": [
+              {
+                "ssrc": 104826935,
+                "rtx": {
+                  "ssrc": 104826936
+                }
+              }
+            ],
+            "rtcp": {
+              "cname": "s5j7HzG3XQxFERZF",
+              "reducedSize": true,
+              "mux": true
+            },
+            "mid": "0"
+          })";
+          auto codec = json::parse(codec_str);
 
-      response["senderId"] = sender->id_;
-      server_transport->Response(id, response);
-      // notify
-      json notify_data;
+          response["rtpParameters"] = codec;
+          response["id"] = receiver->id_;
 
-      notify_data["area"] = "jp";
-      notify_data["host"] = "tokyo1";
-      notify_data["mediaId"] = "foo";
-      notify_data["senderId"] = sender->id_;
-      notify_data["tokenId"] = "abc";
-      notify_data["transportId"] = transportId;
+          server_transport->Response(id, response);
+        } else if (method == "publish") {
+          std::string transportId = data["transportId"];
+          auto t = session->transports[transportId];
+          auto* sender = t->CreateSender(data["rtpParameters"]["encodings"]);
 
-      server_transport->Notify("publish", notify_data);
-    }
-  };
+          response["id"] = sender->id_;
+          server_transport->Response(id, response);
+          // notify
+          json notify_data;
+
+          notify_data["area"] = "jp";
+          notify_data["host"] = "tokyo1";
+          notify_data["mediaId"] = "foo";
+          notify_data["senderId"] = sender->id_;
+          notify_data["tokenId"] = "abc";
+          notify_data["transportId"] = transportId;
+
+          server_transport->Notify("publish", notify_data);
+        }
+      };
 
   server_transport->Init(8800);
 }
