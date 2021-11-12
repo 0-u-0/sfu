@@ -123,8 +123,10 @@ void DtlsTransport::Init(bool is_client) {
   // ice_transport_->Init();
   // FIXME(CC): set by webrtc transport?
   if (is_client) {
+    RTC_LOG(INFO) << "client dtls";
     this->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
   } else {
+    RTC_LOG(INFO) << "server dtls";
     this->SetDtlsRole(rtc::SSLRole::SSL_SERVER);
   }
   // this->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
