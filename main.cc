@@ -581,43 +581,15 @@ int main(int, char**) {
           auto& sender = remoteTransport->mapSender[senderId];
           remoteTransport->AddReceiverToSender(senderId, receiver);
 
-          std::string codec_str = R"({
-            "codecs": [
-              {
-                "mimeType": "video/VP8",
-                "payloadType": 101,
-                "clockRate": 90000,
-                "parameters": {},
-                "rtcpFeedback": [
-                  {
-                    "type": "transport-cc",
-                    "parameter": ""
-                  },
-                  {
-                    "type": "ccm",
-                    "parameter": "fir"
-                  },
-                  {
-                    "type": "nack",
-                    "parameter": ""
-                  },
-                  {
-                    "type": "nack",
-                    "parameter": "pli"
-                  }
-                ]
-              },
-              {
-                "mimeType": "video/rtx",
-                "payloadType": 102,
-                "clockRate": 90000,
-                "parameters": {
-                  "apt": 101
-                },
-                "rtcpFeedback": []
-              }
-            ],
-            "headerExtensions": [
+          json rtpParameters;
+
+          rtpParameters["mid"] = "0";
+          rtpParameters["rtcp"] = json::parse(R"({
+              "cname": "s5j7HzG3XQxFERZF",
+              "reducedSize": true,
+              "mux": true
+            })");
+          rtpParameters["headerExtensions"] = json::parse(R"([
               {
                 "uri": "urn:ietf:params:rtp-hdrext:sdes:mid",
                 "id": 1,
@@ -648,25 +620,55 @@ int main(int, char**) {
                 "encrypt": false,
                 "parameters": {}
               }
-            ],
-            "encodings": [
-              {
-                "ssrc": 104826935,
-                "rtx": {
-                  "ssrc": 104826936
-                }
-              }
-            ],
-            "rtcp": {
-              "cname": "s5j7HzG3XQxFERZF",
-              "reducedSize": true,
-              "mux": true
-            },
-            "mid": "0"
-          })";
-          auto codec = json::parse(codec_str);
+            ])");
 
-          response["rtpParameters"] = codec;
+          rtpParameters["codecs"] = json::parse(R"([
+              {
+                "mimeType": "video/VP8",
+                "payloadType": 96,
+                "clockRate": 90000,
+                "parameters": {},
+                "rtcpFeedback": [
+                  {
+                    "type": "transport-cc",
+                    "parameter": ""
+                  },
+                  {
+                    "type": "ccm",
+                    "parameter": "fir"
+                  },
+                  {
+                    "type": "nack",
+                    "parameter": ""
+                  },
+                  {
+                    "type": "nack",
+                    "parameter": "pli"
+                  }
+                ]
+              },
+              {
+                "mimeType": "video/rtx",
+                "payloadType": 97,
+                "clockRate": 90000,
+                "parameters": {
+                  "apt": 96
+                },
+                "rtcpFeedback": []
+              }
+            ])");
+
+          json::array_t encodings = json::array();
+          json e;
+          e["ssrc"] = sender->ssrc_;
+          e["rtx"] = json::parse(R"({
+              "ssrc": 104826936
+          })");
+          encodings.push_back(e);
+
+          rtpParameters["encodings"] = encodings;
+
+          response["rtpParameters"] = rtpParameters;
           response["id"] = receiver->id_;
 
           server_transport->Response(id, response);

@@ -41,9 +41,10 @@ class SrtpTransport : public sigslot::has_slots<> {
   void CreateSrtpSessions();
 
   bool SendRtpPacket(const char* data,
-                size_t size,
+                     size_t size,
                      const rtc::PacketOptions& options);
   bool ProtectRtp(void* p, int in_len, int max_len, int* out_len);
+  bool IsSrtpActive() const;
 
   DtlsTransport* dtls_transport_;
   absl::optional<cricket::CryptoParams> send_params_;

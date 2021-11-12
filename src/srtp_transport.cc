@@ -255,11 +255,11 @@ bool SrtpTransport::SendRtpPacket(const char* data2,
   auto packet = rtc::CopyOnWriteBuffer(data2, size);
 
   packet.EnsureCapacity(size + kMaxSrtpHmacOverhead);
-  // if (!IsSrtpActive()) {
-  //   RTC_LOG(LS_ERROR)
-  //       << "Failed to send the packet because SRTP transport is inactive.";
-  //   return false;
-  // }
+  if (!IsSrtpActive()) {
+    RTC_LOG(LS_ERROR)
+        << "Failed to send the packet because SRTP transport is inactive.";
+    return false;
+  }
   rtc::PacketOptions updated_options = options;
   // TRACE_EVENT0("webrtc", "SRTP Encode");
   bool res;
@@ -288,6 +288,10 @@ bool SrtpTransport::SendRtpPacket(const char* data2,
   dtls_transport_->ice_transport_->udp_transport_->SendPacket(packet.data(),
                                                               packet.size());
   return true;
+}
+
+bool SrtpTransport::IsSrtpActive() const {
+  return send_session_ && recv_session_;
 }
 
 bool SrtpTransport::ProtectRtp(void* p, int in_len, int max_len, int* out_len) {
