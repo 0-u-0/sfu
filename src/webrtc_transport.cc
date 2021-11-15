@@ -126,8 +126,8 @@ bool WebrtcTransport::SetRemoteFingerprint(const std::string& algorithm,
 }
 
 // TODO(CC): move to network thread
-Sender* WebrtcTransport::CreateSender(json& encodings) {
-  auto* sender = new Sender(encodings);
+Sender* WebrtcTransport::CreateSender(webrtc::RtpParameters& parameter) {
+  auto* sender = new Sender(parameter);
   this->mapSender[sender->id_] = sender;
   this->mapSenderReceiver[sender];
   sender->SignalReadPacket.connect(this, &WebrtcTransport::OnSenderPacket);

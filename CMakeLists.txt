@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(dugon-sfu VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -37,7 +37,9 @@ include_directories(
 
 add_executable(${PROJECT_NAME} 
 ${SRC_FILES}
-main.cc)
+main.cc
+# test.cc
+)
 
 set(COMMON_LIBRARIES 
 ${WEBRTC}

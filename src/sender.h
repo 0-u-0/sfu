@@ -12,7 +12,7 @@ using json = nlohmann::json;
 
 class Sender : public sigslot::has_slots<> {
  public:
-  Sender(json& codec);
+  Sender(webrtc::RtpParameters& parameter);
   const std::string id_;
 
   std::string mid_;

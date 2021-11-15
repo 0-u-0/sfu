@@ -1,6 +1,7 @@
 #include <iostream>
 #include <type_traits>
 
+#include "api/rtp_parameters.h"
 #include "dtls_transport.h"
 #include "rtc_base/event_tracer.h"
 #include "rtc_base/ssl_fingerprint.h"
@@ -9,6 +10,8 @@
 
 #include "session.h"
 #include "webrtc_transport.h"
+
+#include "json_helper.h"
 
 int main(int, char**) {
   // rtc::tracing::SetupInternalTracer();
@@ -675,7 +678,11 @@ int main(int, char**) {
         } else if (method == "publish") {
           std::string transportId = data["transportId"];
           auto t = session->transports[transportId];
-          auto* sender = t->CreateSender(data["rtpParameters"]["encodings"]);
+
+          webrtc::RtpParameters rtpParameters;
+          data["rtpParameters"].get_to(rtpParameters);
+
+          auto* sender = t->CreateSender(rtpParameters);
 
           response["id"] = sender->id_;
           server_transport->Response(id, response);
