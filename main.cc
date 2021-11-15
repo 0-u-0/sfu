@@ -1,8 +1,8 @@
 #include <iostream>
 #include <type_traits>
 
-#include "api/rtp_parameters.h"
 #include "dtls_transport.h"
+#include "ortc/rtp_parameters.h"
 #include "rtc_base/event_tracer.h"
 #include "rtc_base/ssl_fingerprint.h"
 #include "rtp_transport.h"
@@ -577,99 +577,102 @@ int main(int, char**) {
           std::string transportId = data["transportId"];
           std::string remoteTransportId = data["remoteTransportId"];
 
-          auto t = session->transports[transportId];
-          auto receiver = t->CreateReceiver();
-
           auto remoteTransport = session->transports[remoteTransportId];
           auto& sender = remoteTransport->mapSender[senderId];
+
+          auto t = session->transports[transportId];
+          auto receiver = t->CreateReceiver(sender->rtp_parameter_);
+
           remoteTransport->AddReceiverToSender(senderId, receiver);
 
-          json rtpParameters;
+          json rtpParameters = receiver->rtp_parameter_;
 
-          rtpParameters["mid"] = "0";
-          rtpParameters["rtcp"] = json::parse(R"({
-              "cname": "s5j7HzG3XQxFERZF",
-              "reducedSize": true,
-              "mux": true
-            })");
-          rtpParameters["headerExtensions"] = json::parse(R"([
-              {
-                "uri": "urn:ietf:params:rtp-hdrext:sdes:mid",
-                "id": 1,
-                "encrypt": false,
-                "parameters": {}
-              },
-              {
-                "uri": "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
-                "id": 4,
-                "encrypt": false,
-                "parameters": {}
-              },
-              {
-                "uri": "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01",
-                "id": 5,
-                "encrypt": false,
-                "parameters": {}
-              },
-              {
-                "uri": "urn:3gpp:video-orientation",
-                "id": 11,
-                "encrypt": false,
-                "parameters": {}
-              },
-              {
-                "uri": "urn:ietf:params:rtp-hdrext:toffset",
-                "id": 12,
-                "encrypt": false,
-                "parameters": {}
-              }
-            ])");
+          // rtpParameters["mid"] = "0";
+          // rtpParameters["rtcp"] = json::parse(R"({
+          //     "cname": "s5j7HzG3XQxFERZF",
+          //     "reducedSize": true,
+          //     "mux": true
+          //   })");
+          // rtpParameters["headerExtensions"] = json::parse(R"([
+          //     {
+          //       "uri": "urn:ietf:params:rtp-hdrext:sdes:mid",
+          //       "id": 1,
+          //       "encrypt": false,
+          //       "parameters": {}
+          //     },
+          //     {
+          //       "uri":
+          //       "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
+          //       "id": 4,
+          //       "encrypt": false,
+          //       "parameters": {}
+          //     },
+          //     {
+          //       "uri":
+          //       "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01",
+          //       "id": 5,
+          //       "encrypt": false,
+          //       "parameters": {}
+          //     },
+          //     {
+          //       "uri": "urn:3gpp:video-orientation",
+          //       "id": 11,
+          //       "encrypt": false,
+          //       "parameters": {}
+          //     },
+          //     {
+          //       "uri": "urn:ietf:params:rtp-hdrext:toffset",
+          //       "id": 12,
+          //       "encrypt": false,
+          //       "parameters": {}
+          //     }
+          //   ])");
 
-          rtpParameters["codecs"] = json::parse(R"([
-              {
-                "mimeType": "video/VP8",
-                "payloadType": 96,
-                "clockRate": 90000,
-                "parameters": {},
-                "rtcpFeedback": [
-                  {
-                    "type": "transport-cc",
-                    "parameter": ""
-                  },
-                  {
-                    "type": "ccm",
-                    "parameter": "fir"
-                  },
-                  {
-                    "type": "nack",
-                    "parameter": ""
-                  },
-                  {
-                    "type": "nack",
-                    "parameter": "pli"
-                  }
-                ]
-              },
-              {
-                "mimeType": "video/rtx",
-                "payloadType": 97,
-                "clockRate": 90000,
-                "parameters": {
-                  "apt": 96
-                },
-                "rtcpFeedback": []
-              }
-            ])");
+          // rtpParameters["codecs"] = json::parse(R"([
+          //     {
+          //       "mimeType": "video/VP8",
+          //       "payloadType": 96,
+          //       "clockRate": 90000,
+          //       "parameters": {},
+          //       "rtcpFeedback": [
+          //         {
+          //           "type": "transport-cc",
+          //           "parameter": ""
+          //         },
+          //         {
+          //           "type": "ccm",
+          //           "parameter": "fir"
+          //         },
+          //         {
+          //           "type": "nack",
+          //           "parameter": ""
+          //         },
+          //         {
+          //           "type": "nack",
+          //           "parameter": "pli"
+          //         }
+          //       ]
+          //     },
+          //     {
+          //       "mimeType": "video/rtx",
+          //       "payloadType": 97,
+          //       "clockRate": 90000,
+          //       "parameters": {
+          //         "apt": 96
+          //       },
+          //       "rtcpFeedback": []
+          //     }
+          //   ])");
 
-          json::array_t encodings = json::array();
-          json e;
-          e["ssrc"] = sender->ssrc_;
-          e["rtx"] = json::parse(R"({
-              "ssrc": 104826936
-          })");
-          encodings.push_back(e);
+          // json::array_t encodings = json::array();
+          // json e;
+          // e["ssrc"] = sender->ssrc_;
+          // e["rtx"] = json::parse(R"({
+          //     "ssrc": 104826936
+          // })");
+          // encodings.push_back(e);
 
-          rtpParameters["encodings"] = encodings;
+          // rtpParameters["encodings"] = encodings;
 
           response["rtpParameters"] = rtpParameters;
           response["id"] = receiver->id_;
@@ -679,7 +682,7 @@ int main(int, char**) {
           std::string transportId = data["transportId"];
           auto t = session->transports[transportId];
 
-          webrtc::RtpParameters rtpParameters;
+          RtpParameters rtpParameters;
           data["rtpParameters"].get_to(rtpParameters);
 
           auto* sender = t->CreateSender(rtpParameters);

@@ -1,8 +1,8 @@
 
 #include <iostream>
-#include "api/media_types.h"
-#include "api/rtp_parameters.h"
-#include "tools.h"
+
+#include "json_helper.h"
+#include "ortc/rtp_parameters.h"
 
 // void to_json(json& j, const webrtc::RtpParameters& parameter) {
 //   j = json{{"mid", parameter.mid}};
@@ -11,6 +11,8 @@
 // void from_json(const json& j, webrtc::RtpParameters& parameter) {
 //   j.at("mid").get_to(parameter.mid);
 // }
+
+using json = nlohmann::json;
 
 int main() {
   json rtp_json = R"({
@@ -115,7 +117,7 @@ int main() {
   // auto parameter = jsonToRtpParameters(json_str);
 
   // create a person
-  json j = rtp_json.get<webrtc::RtpParameters>();
+  json j = rtp_json.get<RtpParameters>();
   // conversion: person -> json
 
   std::cout << j << std::endl;

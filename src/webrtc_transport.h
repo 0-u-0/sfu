@@ -5,8 +5,8 @@
 
 #include <rtc_base/callback_list.h>
 #include <rtc_base/thread.h>
-#include "api/rtp_parameters.h"
 #include "modules/rtp_rtcp/include/rtp_header_extension_map.h"
+#include "ortc/rtp_parameters.h"
 
 #include <json.hpp>
 
@@ -41,10 +41,10 @@ class WebrtcTransport : public sigslot::has_slots<> {
   void OnReceiverPacket(Receiver*, webrtc::RtpPacketReceived&);
   sigslot::signal2<Sender*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
-  Sender* CreateSender(webrtc::RtpParameters& parameter);
+  Sender* CreateSender(RtpParameters& parameter);
   Sender* GetSender(uint32_t, std::string, std::string);
 
-  Receiver* CreateReceiver();
+  Receiver* CreateReceiver(RtpParameters& sender_parameter);
   void AddReceiverToSender(std::string senderId, Receiver* receiver);
 
   const std::string id_;

@@ -7,12 +7,13 @@
 #include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include "media_types.h"
+#include "ortc/rtp_parameters.h"
 
 using json = nlohmann::json;
 
 class Sender : public sigslot::has_slots<> {
  public:
-  Sender(webrtc::RtpParameters& parameter);
+  Sender(RtpParameters& parameter);
   const std::string id_;
 
   std::string mid_;
@@ -20,6 +21,8 @@ class Sender : public sigslot::has_slots<> {
   uint32_t rtx_ssrc_;
 
   MediaType kind_;
+
+  RtpParameters rtp_parameter_;
 
   sigslot::signal2<Sender*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
