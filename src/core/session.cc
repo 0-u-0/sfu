@@ -3,8 +3,6 @@
 
 #include <rtc_base/logging.h>
 
-#include "webrtc_transport.h"
-
 WebrtcTransport* Session::CreateWebrtcTransport(const std::string& direction,
                                                 const std::string& ip,
                                                 const int port) {

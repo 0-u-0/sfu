@@ -1,7 +1,7 @@
 #ifndef SRC_SESSION_H_
 #define SRC_SESSION_H_
 
-#include "webrtc_transport.h"
+#include "core/webrtc_transport.h"
 
 class Session : public sigslot::has_slots<> {
  public:

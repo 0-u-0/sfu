@@ -1,19 +1,18 @@
 #include <iostream>
 #include <type_traits>
 
-#include "dtls_transport.h"
-#include "ortc/rtp_parameters.h"
 #include "rtc_base/event_tracer.h"
 #include "rtc_base/ssl_fingerprint.h"
-#include "rtp_transport.h"
-#include "server_transport.h"
 
-#include "session.h"
-#include "webrtc_transport.h"
+#include "core/dtls_transport.h"
+#include "core/session.h"
+#include "core/webrtc_transport.h"
+#include "ortc/rtp_parameters.h"
+#include "signal/json_helper.h"
+#include "signal/server_transport.h"
 
-#include "json_helper.h"
-#include "log4cxx_sink.h"
-#include "logger.h"
+#include "common/log4cxx_sink.h"
+#include "common/logger.h"
 
 int main(int, char**) {
   // rtc::tracing::SetupInternalTracer();

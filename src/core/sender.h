@@ -6,7 +6,7 @@
 #include <modules/rtp_rtcp/source/rtp_packet_received.h>
 #include <rtc_base/third_party/sigslot/sigslot.h>
 
-#include "media_types.h"
+#include "core/media_types.h"
 #include "ortc/rtp_parameters.h"
 
 using json = nlohmann::json;

@@ -1,4 +1,4 @@
-#include "dtls_transport.h"
+#include "core/dtls_transport.h"
 
 #include <p2p/base/dtls_transport_internal.h>
 #include <rtc_base/ssl_fingerprint.h>
@@ -110,6 +110,8 @@ void StreamInterfaceChannel::Close() {
   state_ = rtc::SS_CLOSED;
 }
 
+rtc::scoped_refptr<rtc::RTCCertificate> DtlsTransport::certificate_;
+
 DtlsTransport::DtlsTransport(IceTransport* ice_transport,
                              const webrtc::CryptoOptions& crypto_options,
                              rtc::SSLProtocolVersion max_version)
@@ -132,10 +134,11 @@ void DtlsTransport::Init(bool is_client) {
   // this->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
 }
 
-auto DtlsTransport::certificate_ = rtc::RTCCertificate::Create(
-    rtc::SSLIdentity::Create("name_", rtc::KT_DEFAULT));
-
 const rtc::scoped_refptr<rtc::RTCCertificate>& DtlsTransport::certificate() {
+  if (certificate_ == nullptr) {
+    certificate_ = rtc::RTCCertificate::Create(
+        rtc::SSLIdentity::Create("name_", rtc::KT_DEFAULT));
+  }
   return certificate_;
 }
 

@@ -1,11 +1,11 @@
 
-#include "srtp_transport.h"
+#include "core/srtp_transport.h"
 
 #include <media/base/rtp_utils.h>
 #include <rtc_base/logging.h>
 #include <rtc_base/numerics/safe_conversions.h>
 
-#include "dtls_transport.h"
+#include "core/dtls_transport.h"
 
 SrtpTransport::SrtpTransport() {}
 

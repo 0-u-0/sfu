@@ -1,9 +1,9 @@
 #ifndef SRC_ICE_TRANSPORT_H_
 #define SRC_ICE_TRANSPORT_H_
 
-#include <rtc_base/third_party/sigslot/sigslot.h>
+#include "rtc_base/third_party/sigslot/sigslot.h"
 
-#include "udp_transport.h"
+#include "core/udp_transport.h"
 
 // ice-lite
 // https://datatracker.ietf.org/doc/html/rfc5245#section-2.7

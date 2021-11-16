@@ -1,10 +1,10 @@
 
-#include "ice_transport.h"
+#include "core/ice_transport.h"
 
-#include <api/transport/stun.h>
-#include <rtc_base/logging.h>
+#include "api/transport/stun.h"
+#include "rtc_base/logging.h"
 
-#include "tools.h"
+#include "common/tools.h"
 
 bool ParseStunUsername(const cricket::StunMessage* stun_msg,
                        std::string* local_ufrag,
