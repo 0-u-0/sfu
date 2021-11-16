@@ -29,7 +29,7 @@ void UdpTransport::OnPacket(rtc::AsyncPacketSocket* socket,
                             size_t size,
                             const rtc::SocketAddress& addr,
                             const int64_t& timestamp) {
-  ELOG_DEBUG("Get data from %s", addr.ToString().c_str());
+  DLOG("Get data from {}", addr.ToString());
   emit_packet_(data, size, addr, timestamp);
 }
 
@@ -37,7 +37,7 @@ void UdpTransport::SendPacket(const uint8_t* data, size_t size) {
   if (!remote_address_.IsNil()) {
     if (!rtp_socket_->SendTo(data, size, remote_address_,
                              rtc::PacketOptions())) {
-      ELOG_WARN("Send failed");
+      // LOG_WARN("Send failed");
     }
   }
 }
@@ -46,6 +46,6 @@ void UdpTransport::SendTo(const uint8_t* data,
                           size_t size,
                           const rtc::SocketAddress& addr) {
   if (!rtp_socket_->SendTo(data, size, addr, rtc::PacketOptions())) {
-    ELOG_WARN("Send failed");
+    // LOG_WARN("Send failed");
   }
 }

@@ -5,13 +5,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+#for clang-tidy
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
     set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 endif()
 
 find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(LOG4 REQUIRED IMPORTED_TARGET liblog4cxx)
 
 #variable
 set(WEBRTC_SRC_PATH "" CACHE STRING "webrtc path")
@@ -26,10 +26,14 @@ find_package(Boost 1.72.0 COMPONENTS thread system REQUIRED)
 
 file(GLOB_RECURSE SRC_FILES src/*.h, src/*.cc)
 
+add_subdirectory(deps/logging-log4cxx)
+add_subdirectory(deps/fmt)
+
 include_directories(
        src
        deps/json/single_include/nlohmann
        deps 
+       $<TARGET_PROPERTY:log4cxx,INCLUDE_DIRECTORIES>
        ${Boost_INCLUDE_DIRS}
        ${WEBRTC_SRC_PATH}
        ${WEBRTC_SRC_PATH}/third_party/abseil-cpp
@@ -43,7 +47,8 @@ main.cc
 
 set(COMMON_LIBRARIES 
 ${WEBRTC}
-PkgConfig::LOG4
+log4cxx
+fmt::fmt
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -75,5 +80,3 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 else()
     message("unknown system " ${CMAKE_SYSTEM_NAME})
 endif()
-
-

@@ -1,0 +1,6 @@
+[submodule "deps/fmt"]
+	path = deps/fmt
+	url = git@github.com:fmtlib/fmt.git
+[submodule "deps/logging-log4cxx"]
+	path = deps/logging-log4cxx
+	url = git@github.com:apache/logging-log4cxx.git

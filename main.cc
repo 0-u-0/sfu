@@ -12,11 +12,18 @@
 #include "webrtc_transport.h"
 
 #include "json_helper.h"
+#include "log4cxx_sink.h"
+#include "logger.h"
 
 int main(int, char**) {
   // rtc::tracing::SetupInternalTracer();
   // rtc::tracing::StartInternalCapture(
   //     "/Users/congchen/workspace/dugon/dugon-sfu/event_trace.log");
+  LOG_CONFIGURATION("/Users/congchen/workspace/dugon/sfu/log4cxx.properties");
+
+  rtc::LogMessage::SetLogToStderr(false);
+  Log4cxxSink log4;
+  rtc::LogMessage::AddLogToStream(&log4, rtc::LS_VERBOSE);
 
   auto server_transport = new ServerTransport();
   server_transport->notify_callback_ = [](std::string method, json data) {
