@@ -4,6 +4,7 @@
 #include <media/base/rtp_utils.h>
 #include <rtc_base/logging.h>
 #include <rtc_base/numerics/safe_conversions.h>
+#include "modules/rtp_rtcp/source/rtp_util.h"
 
 #include "core/dtls_transport.h"
 
@@ -225,19 +226,16 @@ void SrtpTransport::OnRtpPacketReceived(rtc::CopyOnWriteBuffer packet,
   char* data = packet.MutableData<char>();
   int len = rtc::checked_cast<int>(packet.size());
   if (!UnprotectRtp(data, len, &len)) {
-    int seq_num = -1;
-    uint32_t ssrc = 0;
-    cricket::GetRtpSeqNum(data, len, &seq_num);
-    cricket::GetRtpSsrc(data, len, &ssrc);
-
     // Limit the error logging to avoid excessive logs when there are lots of
     // bad packets.
     const int kFailureLogThrottleCount = 100;
     if (decryption_failure_count_ % kFailureLogThrottleCount == 0) {
-      RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << len
-                        << ", seqnum=" << seq_num << ", SSRC=" << ssrc
-                        << ", previous failure count: "
-                        << decryption_failure_count_;
+      // RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << len
+      //                   << ", seqnum=" <<
+      //                   webrtc::ParseRtpSequenceNumber(packet)
+      //                   << ", SSRC=" << webrtc::ParseRtpSsrc(packet)
+      //                   << ", previous failure count: "
+      //                   << decryption_failure_count_;
     }
     ++decryption_failure_count_;
     return;
@@ -273,10 +271,8 @@ bool SrtpTransport::SendRtpPacket(const char* data2,
   res = ProtectRtp(data, len, static_cast<int>(packet.capacity()), &len);
 
   if (!res) {
-    int seq_num = -1;
-    uint32_t ssrc = 0;
-    cricket::GetRtpSeqNum(data, len, &seq_num);
-    cricket::GetRtpSsrc(data, len, &ssrc);
+    uint16_t seq_num = webrtc::ParseRtpSequenceNumber(packet);
+    uint32_t ssrc = webrtc::ParseRtpSsrc(packet);
     RTC_LOG(LS_ERROR) << "Failed to protect RTP packet: size=" << len
                       << ", seqnum=" << seq_num << ", SSRC=" << ssrc;
     return false;

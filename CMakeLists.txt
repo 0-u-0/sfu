@@ -54,7 +54,7 @@ fmt::fmt
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message("macos")
 
-    set(CMAKE_CXX_FLAGS "-DWEBRTC_POSIX -DWEBRTC_MAC ${CMAKE_CXX_FLAGS}")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WEBRTC_POSIX WEBRTC_MAC)
     find_library(APPLICATION_SERVICES ApplicationServices)
     find_library(AUDIO_TOOLBOX AudioToolbox)
     find_library(CORE_AUDIO CoreAudio)
@@ -71,7 +71,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     message("linux")
 
-    set(CMAKE_CXX_FLAGS "-DWEBRTC_POSIX ${CMAKE_CXX_FLAGS} ")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WEBRTC_POSIX)
     find_package(Threads REQUIRED)
 
     target_link_libraries(${PROJECT_NAME}
