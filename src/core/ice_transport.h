@@ -5,20 +5,24 @@
 
 #include "core/udp_transport.h"
 
-// ice-lite
+#include "common/logger.h"
+
+enum class IceTransportState {
+  STATE_INIT,
+  STATE_CONNECTING,  // Will enter this state once a connection is created
+  STATE_COMPLETED,
+  STATE_FAILED
+};
+
+// ice-lite, role is controlled.
 // https://datatracker.ietf.org/doc/html/rfc5245#section-2.7
 class IceTransport : public sigslot::has_slots<> {
+  DECLARE_LOGGER();
+
  public:
   IceTransport(const std::string& ip, const int port);
   void Init();
-  // Attempts to send the given packet.
-  // The return value is < 0 on failure. The return value in failure case is not
-  // descriptive. Depending on failure cause and implementation details
-  // GetError() returns an descriptive errno.h error value.
-  // This mimics posix socket send() or sendto() behavior.
-  // TODO(johan): Reliable, meaningful, consistent error codes for all
-  // implementations would be nice.
-  // TODO(johan): Remove the default argument once channel code is updated.
+
   int SendPacket(const char* data,
                  size_t len,
                  const rtc::PacketOptions& options,
@@ -37,6 +41,7 @@ class IceTransport : public sigslot::has_slots<> {
   std::string local_ufrag_;
   std::string local_password_;
   UdpTransport* udp_transport_;
+  IceTransportState state_ = IceTransportState::STATE_INIT;
 };
 
 #endif /* SRC_ICE_TRANSPORT_H_ */

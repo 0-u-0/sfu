@@ -37,7 +37,7 @@ void UdpTransport::SendPacket(const uint8_t* data, size_t size) {
   if (!remote_address_.IsNil()) {
     if (!rtp_socket_->SendTo(data, size, remote_address_,
                              rtc::PacketOptions())) {
-      // LOG_WARN("Send failed");
+      // TODO(CC): handle errror
     }
   }
 }

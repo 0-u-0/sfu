@@ -6,6 +6,8 @@
 #include <log4cxx/logger.h>
 #include <log4cxx/propertyconfigurator.h>
 
+extern log4cxx::LoggerPtr globalLogger;
+
 #define LOG_CONFIGURATION(configuration) \
   log4cxx::PropertyConfigurator::configure(configuration);
 
@@ -21,6 +23,12 @@
 #define ILOG(...) LOG4CXX_INFO_FMT(logger, __VA_ARGS__);
 #define WLOG(...) LOG4CXX_WARN_FMT(logger, __VA_ARGS__);
 #define ELOG(...) LOG4CXX_ERROR_FMT(logger, __VA_ARGS__);
+
+#define DGLOG(...) LOG4CXX_DEBUG_FMT(globalLogger, __VA_ARGS__);
+#define IGLOG(...) LOG4CXX_INFO_FMT(globalLogger, __VA_ARGS__);
+#define WGLOG(...) LOG4CXX_WARN_FMT(globalLogger, __VA_ARGS__);
+#define EGLOG(...) LOG4CXX_ERROR_FMT(globalLogger, __VA_ARGS__);
+
 // #define LOG_ERROR(fmt, args...) LOG4CXX_ERROR_FMT(logger, fmt, ##args);
 
 // #define LOG_FATAL(fmt, args...) LOG4CXX_FATAL_FMT(logger, fmt, ##args);
