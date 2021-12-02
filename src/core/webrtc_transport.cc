@@ -35,6 +35,7 @@ WebrtcTransport::WebrtcTransport(const std::string& direction,
   srtp_transport_ = thread_->Invoke<SrtpTransport*>(RTC_FROM_HERE, [this]() {
     auto srtp = new SrtpTransport();
     srtp->packet_callback_list_.AddReceiver(
+        // TODO(CC): remove copy
         this, [this](rtc::CopyOnWriteBuffer packet) {
           this->packet_callback_list_.Send(std::move(packet));
         });
