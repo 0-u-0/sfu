@@ -2,15 +2,17 @@
 #include "rtp_demuxer.h"
 #include <cstddef>
 
+#include "common/logger.h"
 #include "modules/rtp_rtcp/source/rtp_header_extensions.h"
-#include "rtc_base/logging.h"
 #include "sender.h"
+
+DEFINE_LOGGER(RtpDemuxer, "RtpDemuxer");
+
+void RtpDemuxer::RemoveSender(Sender* sender) {}
 
 void RtpDemuxer::AddSender(Sender* sender) {
   AddSsrcSinkBinding(sender->ssrc_, sender);
 }
-
-void RtpDemuxer::RemoveSender(Sender* sender) {}
 
 Sender* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
   std::string packet_mid, packet_rsid;
@@ -19,9 +21,9 @@ Sender* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
 
   uint32_t ssrc = packet.Ssrc();
 
-  RTC_LOG(INFO) << "has_rsid: " << has_rsid;
-  RTC_LOG(INFO) << "has_mid: " << has_mid;
-  RTC_LOG(INFO) << "mid: " << packet_mid;
+  ILOG("has_rsid: {}", has_rsid)
+  ILOG("has_mid: {}", has_mid)
+  ILOG("mid: {}", packet_mid)
 
   Sender* sender = ResolveSenderByMid(packet_mid, ssrc);
   if (sender != nullptr) {
@@ -61,11 +63,9 @@ void RtpDemuxer::AddSsrcSinkBinding(uint32_t ssrc, Sender* sender) {
   auto it = result.first;
   bool inserted = result.second;
   if (inserted) {
-    RTC_LOG(LS_INFO) << "Added sink = " << sender
-                     << " binding with SSRC=" << ssrc;
+    ILOG("Added sink = {}, binding with SSRC = {}", sender->id_, ssrc);
   } else if (it->second != sender) {
-    RTC_LOG(LS_INFO) << "Updated sink = " << sender
-                     << " binding with SSRC=" << ssrc;
+    ILOG("Updated sink = {}, binding with SSRC = {}", sender->id_, ssrc);
     it->second = sender;
   }
 }

@@ -1,8 +1,6 @@
 
 #include "session.h"
 
-#include <rtc_base/logging.h>
-
 WebrtcTransport* Session::CreateWebrtcTransport(const std::string& direction,
                                                 const std::string& ip,
                                                 const int port) {
@@ -14,5 +12,5 @@ WebrtcTransport* Session::CreateWebrtcTransport(const std::string& direction,
 
 void Session::OnSenderPacket(Sender* sender,
                              webrtc::RtpPacketReceived& packet) {
-  RTC_LOG(INFO) << "session sender packet";
+  // RTC_LOG(INFO) << "session sender packet";
 }

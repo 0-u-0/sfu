@@ -3,9 +3,12 @@
 
 #include <string>
 
+#include "common/logger.h"
 #include "sender.h"
 
 class Receiver : public sigslot::has_slots<> {
+  DECLARE_LOGGER();
+
  public:
   Receiver(RtpParameters& parameter);
   void OnSenderPacket(Sender*, webrtc::RtpPacketReceived&);

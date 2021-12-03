@@ -9,6 +9,7 @@
 #include "rtc_base/callback_list.h"
 #include "rtc_base/thread.h"
 
+#include "common/logger.h"
 #include "core/dtls_transport.h"
 #include "core/ice_transport.h"
 #include "core/receiver.h"
@@ -20,6 +21,8 @@
 using json = nlohmann::json;
 
 class WebrtcTransport : public sigslot::has_slots<> {
+  DECLARE_LOGGER();
+
  public:
   WebrtcTransport(const std::string& direction,
                   const std::string& ip,

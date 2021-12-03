@@ -4,9 +4,12 @@
 #include <modules/rtp_rtcp/source/rtp_packet_received.h>
 #include <rtc_base/containers/flat_map.h>
 
+#include "common/logger.h"
 #include "sender.h"
 
 class RtpDemuxer {
+  DECLARE_LOGGER();
+
  public:
   void AddSender(Sender* sender);
   void RemoveSender(Sender* sender);

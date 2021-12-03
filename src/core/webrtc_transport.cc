@@ -8,7 +8,6 @@
 #include "modules/rtp_rtcp/include/rtp_rtcp_defines.h"
 #include "modules/rtp_rtcp/source/rtp_packet_received.h"
 #include "rtc_base/helpers.h"
-#include "rtc_base/logging.h"
 #include "rtc_base/task_utils/to_queued_task.h"
 
 #include "common/tools.h"
@@ -16,6 +15,8 @@
 #include "core/rtp_demuxer.h"
 
 using namespace cricket;
+
+DEFINE_LOGGER(WebrtcTransport, "WebrtcTransport")
 
 WebrtcTransport::WebrtcTransport(const std::string& direction,
                                  const std::string& ip,
@@ -105,7 +106,7 @@ void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
 
   Sender* sender = rtp_demuxer_->ResolveSender(packet);
   if (sender != nullptr) {
-    RTC_LOG(INFO) << "found sender";
+    ILOG("found sender");
     sender->OnRtpPacket(packet);
   }
 
@@ -144,7 +145,7 @@ Sender* WebrtcTransport::GetSender(uint32_t ssrc,
 
 void WebrtcTransport::OnSenderPacket(Sender* sender,
                                      webrtc::RtpPacketReceived& packet) {
-  RTC_LOG(INFO) << "sender packet: " << sender->id_;
+  ILOG("sender packet: {}", sender->id_);
 
   auto& receivers = this->mapSenderReceiver.at(sender);
 
@@ -172,7 +173,7 @@ void WebrtcTransport::OnReceiverPacket(Receiver* receiver,
 
 void WebrtcTransport::AddReceiverToSender(std::string senderId,
                                           Receiver* receiver) {
-  RTC_LOG(INFO) << "add receiver " << receiver->id_ << " to " << senderId;
+  ILOG("Add receiver {} to {}", receiver->id_, senderId);
 
   auto* sender = this->mapSender[senderId];
   auto& receivers = this->mapSenderReceiver[sender];
