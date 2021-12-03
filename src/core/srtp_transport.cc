@@ -8,6 +8,8 @@
 
 #include "core/dtls_transport.h"
 
+DEFINE_LOGGER(SrtpTransport, "SrtpTransport");
+
 SrtpTransport::SrtpTransport() {}
 
 static const char kDtlsSrtpExporterLabel[] = "EXTRACTOR-dtls_srtp";

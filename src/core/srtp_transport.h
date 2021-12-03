@@ -6,9 +6,12 @@
 #include <rtc_base/callback_list.h>
 #include <rtc_base/copy_on_write_buffer.h>
 
+#include "common/logger.h"
 #include "core/dtls_transport.h"
 
 class SrtpTransport : public sigslot::has_slots<> {
+  DECLARE_LOGGER();
+
  public:
   SrtpTransport();
 

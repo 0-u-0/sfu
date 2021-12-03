@@ -6,8 +6,6 @@
 #include "rtc_base/rtc_certificate.h"
 #include "rtc_base/ssl_identity.h"
 
-#include "common/logger.h"
-
 static const size_t kDtlsRecordHeaderLen = 13;
 static const size_t kMaxDtlsPacketLen = 2048;
 static const size_t kMinRtpPacketLen = 12;
