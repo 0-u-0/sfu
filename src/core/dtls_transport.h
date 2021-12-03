@@ -106,13 +106,6 @@ class DtlsTransport : public sigslot::has_slots<> {
                             size_t result_len);
 
   DtlsTransportState dtls_state() const;
-  std::string ToString() const {
-    const absl::string_view RECEIVING_ABBREV[2] = {"_", "R"};
-    const absl::string_view WRITABLE_ABBREV[2] = {"_", "W"};
-    rtc::StringBuilder sb;
-    sb << "DtlsTransport[";
-    return sb.Release();
-  }
 
   bool dtls_active_ = false;
   IceTransport* ice_transport_;
