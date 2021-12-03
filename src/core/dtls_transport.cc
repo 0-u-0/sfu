@@ -2,10 +2,11 @@
 
 #include <p2p/base/dtls_transport_internal.h>
 #include <rtc_base/ssl_fingerprint.h>
-#include "common/logger.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/rtc_certificate.h"
 #include "rtc_base/ssl_identity.h"
+
+#include "common/logger.h"
 
 static const size_t kDtlsRecordHeaderLen = 13;
 static const size_t kMaxDtlsPacketLen = 2048;
@@ -34,11 +35,6 @@ static bool IsDtlsClientHelloPacket(const char* data, size_t len) {
   }
   const uint8_t* u = reinterpret_cast<const uint8_t*>(data);
   return len > 17 && u[0] == 22 && u[13] == 1;
-}
-
-static bool IsRtpPacket(const char* data, size_t len) {
-  const uint8_t* u = reinterpret_cast<const uint8_t*>(data);
-  return (len >= kMinRtpPacketLen && (u[0] & 0xC0) == 0x80);
 }
 
 StreamInterfaceChannel::StreamInterfaceChannel(IceTransport* ice_transport)
@@ -442,18 +438,12 @@ void DtlsTransport::OnPacket(const char* data,
           return;
         }
 
-        // And it had better be a SRTP packet.
-        if (!IsRtpPacket(data, size)) {
-          RTC_LOG(LS_ERROR) << ": Received unexpected non-DTLS packet.";
-          return;
-        }
-
         // Sanity check.
         RTC_DCHECK(!srtp_ciphers_.empty());
 
         // Signal this upwards as a bypass packet.
         // TODO(CC):
-        SignalReadPacket(data, size, packet_time_us, cricket::PF_SRTP_BYPASS);
+        emit_srtp_packet_(data, size, packet_time_us, cricket::PF_SRTP_BYPASS);
       }
       break;
     case DTLS_TRANSPORT_FAILED:
@@ -549,7 +539,7 @@ void DtlsTransport::OnDtlsEvent(rtc::StreamInterface* dtls, int sig, int err) {
     do {
       ret = dtls_->Read(buf, sizeof(buf), &read, &read_error);
       if (ret == rtc::SR_SUCCESS) {
-        // SignalReadPacket(this, buf, read, rtc::TimeMicros(), 0);
+        // SignalReadPacket(buf, read, rtc::TimeMicros(), 0);
       } else if (ret == rtc::SR_EOS) {
         // Remote peer shut down the association with no error.
         ILOG("DTLS transport closed by remote");

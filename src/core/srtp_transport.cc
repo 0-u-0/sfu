@@ -19,7 +19,8 @@ void SrtpTransport::SetDtlsTransport(DtlsTransport* dtls_transport) {
       this, [this](DtlsTransport* transport, const DtlsTransportState state) {
         OnDtlsState(transport, state);
       });
-  dtls_transport_->SignalReadPacket.connect(this, &SrtpTransport::OnReadPacket);
+  dtls_transport_->emit_srtp_packet_.connect(this,
+                                             &SrtpTransport::OnReadPacket);
 }
 
 void SrtpTransport::SetupRtpDtlsSrtp() {
@@ -207,7 +208,6 @@ void SrtpTransport::OnReadPacket(const char* data,
 
   rtc::CopyOnWriteBuffer packet(data, len);
 
-  OnRtpPacketReceived(std::move(packet), packet_time_us);
   if (packet_type == cricket::RtpPacketType::kRtcp) {
     // OnRtcpPacketReceived(std::move(packet), packet_time_us);
     // TODO(CC): handle rtcp
@@ -229,16 +229,21 @@ void SrtpTransport::OnRtpPacketReceived(rtc::CopyOnWriteBuffer packet,
   if (!UnprotectRtp(data, len, &len)) {
     // Limit the error logging to avoid excessive logs when there are lots of
     // bad packets.
-    const int kFailureLogThrottleCount = 100;
-    if (decryption_failure_count_ % kFailureLogThrottleCount == 0) {
-      // RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << len
-      //                   << ", seqnum=" <<
-      //                   webrtc::ParseRtpSequenceNumber(packet)
-      //                   << ", SSRC=" << webrtc::ParseRtpSsrc(packet)
-      //                   << ", previous failure count: "
-      //                   << decryption_failure_count_;
-    }
-    ++decryption_failure_count_;
+    // const int kFailureLogThrottleCount = 100;
+    // if (decryption_failure_count_ % kFailureLogThrottleCount == 0) {
+    //   RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << len
+    //                     << ", seqnum=" <<
+    //                     webrtc::ParseRtpSequenceNumber(packet)
+    //                     << ", SSRC=" << webrtc::ParseRtpSsrc(packet)
+    //                     << ", previous failure count: "
+    //                     << decryption_failure_count_;
+    // }
+    // ++decryption_failure_count_;
+    RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << len
+                      << ", seqnum=" << webrtc::ParseRtpSequenceNumber(packet)
+                      << ", SSRC=" << webrtc::ParseRtpSsrc(packet)
+                      << ", previous failure count: "
+                      << decryption_failure_count_;
     return;
   }
   packet.SetSize(len);

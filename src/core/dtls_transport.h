@@ -127,7 +127,7 @@ class DtlsTransport : public sigslot::has_slots<> {
   webrtc::CallbackList<DtlsTransport*, const DtlsTransportState>
       dtls_state_callback_list_;
   // Signalled each time a packet is received on this channel.
-  sigslot::signal4<const char*, size_t, const int64_t, int> SignalReadPacket;
+  sigslot::signal4<const char*, size_t, const int64_t, int> emit_srtp_packet_;
 };
 
 #endif /* SRC_DTLS_TRANSPORT_H_ */
