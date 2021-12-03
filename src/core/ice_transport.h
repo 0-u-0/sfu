@@ -33,15 +33,18 @@ class IceTransport : public sigslot::has_slots<> {
                 const rtc::SocketAddress& addr,
                 const int64_t timestamp);
 
-  bool writable() { return true; };
+  void SetState(IceTransportState state);
+  bool writable() { return writable_; };
 
   sigslot::signal3<const char*, size_t, const int64_t> emit_packet_;
+  sigslot::signal1<IceTransportState> emit_state_;
 
   // variable
   std::string local_ufrag_;
   std::string local_password_;
   UdpTransport* udp_transport_;
   IceTransportState state_ = IceTransportState::STATE_INIT;
+  bool writable_ = false;
 };
 
 #endif /* SRC_ICE_TRANSPORT_H_ */

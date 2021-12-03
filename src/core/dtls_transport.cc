@@ -112,6 +112,8 @@ void StreamInterfaceChannel::Close() {
 
 rtc::scoped_refptr<rtc::RTCCertificate> DtlsTransport::certificate_;
 
+DEFINE_LOGGER(DtlsTransport, "DtlsTransport");
+
 DtlsTransport::DtlsTransport(IceTransport* ice_transport,
                              const webrtc::CryptoOptions& crypto_options,
                              rtc::SSLProtocolVersion max_version)
@@ -122,6 +124,8 @@ DtlsTransport::DtlsTransport(IceTransport* ice_transport,
 
 void DtlsTransport::Init(bool is_client) {
   ice_transport_->emit_packet_.connect(this, &DtlsTransport::OnPacket);
+  ice_transport_->emit_state_.connect(this,
+                                      &DtlsTransport::OnIceTransportState);
   // ice_transport_->Init();
   // FIXME(CC): set by webrtc transport?
   if (is_client) {
@@ -132,6 +136,18 @@ void DtlsTransport::Init(bool is_client) {
     this->SetDtlsRole(rtc::SSLRole::SSL_SERVER);
   }
   // this->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
+}
+
+void DtlsTransport::OnIceTransportState(IceTransportState state) {
+  if (state == IceTransportState::STATE_COMPLETED) {
+    // TODO(CC): check dtls
+    if (dtls_state() == DtlsTransportState::DTLS_TRANSPORT_NEW && dtls_role_ &&
+        dtls_role_.value() == rtc::SSL_CLIENT) {
+      ILOG("dtls start");
+      // MaybeStartDtls();
+      SetupDtls();
+    }
+  }
 }
 
 const rtc::scoped_refptr<rtc::RTCCertificate>& DtlsTransport::certificate() {
@@ -350,10 +366,10 @@ bool DtlsTransport::SetRemoteFingerprint(const std::string& digest_alg,
   remote_fingerprint_value_ = std::move(remote_fingerprint_value);
   remote_fingerprint_algorithm_ = digest_alg;
 
+  // This can occur if DTLS is set up before a remote fingerprint is
+  // received. For instance, if we set up DTLS due to receiving an early
+  // ClientHello.
   if (dtls_ && !fingerprint_changing) {
-    // This can occur if DTLS is set up before a remote fingerprint is
-    // received. For instance, if we set up DTLS due to receiving an early
-    // ClientHello.
     rtc::SSLPeerCertificateDigestError err;
     if (!dtls_->SetPeerCertificateDigest(
             remote_fingerprint_algorithm_,
@@ -379,10 +395,10 @@ bool DtlsTransport::SetRemoteFingerprint(const std::string& digest_alg,
     // set_writable(false);
   }
 
-  if (!SetupDtls()) {
-    set_dtls_state(DTLS_TRANSPORT_FAILED);
-    return false;
-  }
+  // if (!SetupDtls()) {
+  //   set_dtls_state(DTLS_TRANSPORT_FAILED);
+  //   return false;
+  // }
 
   return true;
 }

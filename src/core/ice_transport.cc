@@ -62,7 +62,7 @@ IceTransport::IceTransport(const std::string& ip, const int port) {
 void IceTransport::Init() {
   udp_transport_->emit_packet_.connect(this, &IceTransport::OnPacket);
   udp_transport_->Init();
-  state_ = IceTransportState::STATE_CONNECTING;
+  SetState(IceTransportState::STATE_CONNECTING);
 }
 
 void IceTransport::OnPacket(const char* data,
@@ -127,8 +127,9 @@ void IceTransport::OnPacket(const char* data,
       if (state_ != IceTransportState::STATE_COMPLETED &&
           stun_msg->GetByteString(cricket::STUN_ATTR_USE_CANDIDATE)) {
         udp_transport_->SetRemoteAddress(addr);
-        state_ = IceTransportState::STATE_COMPLETED;
+        writable_ = true;
         ILOG("ice completed");
+        SetState(IceTransportState::STATE_COMPLETED);
       }
 
       udp_transport_->SendTo(reinterpret_cast<const uint8_t*>(buf.Data()),
@@ -148,4 +149,9 @@ int IceTransport::SendPacket(const char* data,
   ILOG("SendPacket");
   this->udp_transport_->SendPacket(reinterpret_cast<const uint8_t*>(data), len);
   return 0;
+}
+
+void IceTransport::SetState(IceTransportState state) {
+  state_ = state;
+  emit_state_(state);
 }

@@ -208,11 +208,12 @@ void SrtpTransport::OnReadPacket(const char* data,
   rtc::CopyOnWriteBuffer packet(data, len);
 
   OnRtpPacketReceived(std::move(packet), packet_time_us);
-  // if (packet_type == cricket::RtpPacketType::kRtcp) {
-  //   OnRtcpPacketReceived(std::move(packet), packet_time_us);
-  // } else {
-  //   OnRtpPacketReceived(std::move(packet), packet_time_us);
-  // }
+  if (packet_type == cricket::RtpPacketType::kRtcp) {
+    // OnRtcpPacketReceived(std::move(packet), packet_time_us);
+    // TODO(CC): handle rtcp
+  } else {
+    OnRtpPacketReceived(std::move(packet), packet_time_us);
+  }
 }
 
 void SrtpTransport::OnRtpPacketReceived(rtc::CopyOnWriteBuffer packet,

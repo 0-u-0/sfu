@@ -10,6 +10,7 @@
 #include "rtc_base/strings/string_builder.h"
 #include "rtc_base/system/no_unique_address.h"
 
+#include "common/logger.h"
 #include "core/ice_transport.h"
 
 // A bridge between a packet-oriented/transport-type interface on
@@ -60,6 +61,8 @@ active : client
 passive : server
 */
 class DtlsTransport : public sigslot::has_slots<> {
+  DECLARE_LOGGER();
+
  public:
   DtlsTransport(
       IceTransport* ice_transport,
@@ -82,6 +85,7 @@ class DtlsTransport : public sigslot::has_slots<> {
                             size_t digest_len);
 
   void OnPacket(const char* data, size_t size, const int64_t packet_time_us);
+  void OnIceTransportState(IceTransportState state);
   bool HandleDtlsPacket(const char* data, size_t size);
   bool GetDtlsRole(rtc::SSLRole* role) const;
   bool SetDtlsRole(rtc::SSLRole role);
