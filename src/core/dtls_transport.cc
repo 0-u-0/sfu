@@ -141,11 +141,9 @@ void DtlsTransport::Init(bool is_client) {
 void DtlsTransport::OnIceTransportState(IceTransportState state) {
   if (state == IceTransportState::STATE_COMPLETED) {
     // TODO(CC): check dtls
-    if (dtls_state() == DtlsTransportState::DTLS_TRANSPORT_NEW && dtls_role_ &&
-        dtls_role_.value() == rtc::SSL_CLIENT) {
+    if (dtls_state() == DtlsTransportState::DTLS_TRANSPORT_NEW) {
       ILOG("dtls start");
-      // MaybeStartDtls();
-      SetupDtls();
+      MaybeStartDtls();
     }
   }
 }
@@ -395,10 +393,10 @@ bool DtlsTransport::SetRemoteFingerprint(const std::string& digest_alg,
     // set_writable(false);
   }
 
-  // if (!SetupDtls()) {
-  //   set_dtls_state(DTLS_TRANSPORT_FAILED);
-  //   return false;
-  // }
+  if (!SetupDtls()) {
+    set_dtls_state(DTLS_TRANSPORT_FAILED);
+    return false;
+  }
 
   return true;
 }
