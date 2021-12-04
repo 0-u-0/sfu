@@ -592,6 +592,8 @@ int main(int, char**) {
           remoteTransport->AddReceiverToSender(senderId, receiver);
 
           json rtpParameters = receiver->rtp_parameter_;
+          IGLOG("sender ssrc: {}",
+                sender->rtp_parameter_.encodings[0].ssrc.value());
 
           response["rtpParameters"] = rtpParameters;
           response["id"] = receiver->id_;
