@@ -34,24 +34,24 @@ void Receiver::OnSenderPacket(Sender*, webrtc::RtpPacketReceived& rtp_packet) {
                        1);  // TODO(CC): why minus 1?
       sync_required_ = false;
     } else if (kind_ == MediaType::VIDEO) {
-      absl::optional<webrtc::VideoRtpDepacketizer::ParsedRtpPayload>
-          parsed_payload =
-              video_rtp_depacketizer_->Parse(rtp_packet.PayloadBuffer());
+      // absl::optional<webrtc::VideoRtpDepacketizer::ParsedRtpPayload>
+      //     parsed_payload =
+      //         video_rtp_depacketizer_->Parse(rtp_packet.PayloadBuffer());
 
-      if (parsed_payload == absl::nullopt) {
-        WLOG("Failed parsing payload.");
-        return;
-      }
+      // if (parsed_payload == absl::nullopt) {
+      //   WLOG("Failed parsing payload.");
+      //   return;
+      // }
 
-      if (!parsed_payload.has_value()) {
-        WLOG("No Value");
-        return;
-      }
+      // if (!parsed_payload.has_value()) {
+      //   WLOG("No Value");
+      //   return;
+      // }
 
-      webrtc::VideoRtpDepacketizer::ParsedRtpPayload real =
-          parsed_payload.value();
+      // webrtc::VideoRtpDepacketizer::ParsedRtpPayload real =
+      //     parsed_payload.value();
 
-      real.video_payload.Clear();
+      // real.video_payload.Clear();
 
       // auto video_packet =
       //     std::make_unique<webrtc::video_coding::PacketBuffer::Packet>(
