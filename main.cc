@@ -483,7 +483,7 @@ int main(int, char**) {
           response["codecs"] = codecs;
 
           server_transport->Response(id, response);
-        } else if (method == "createTransport") {
+        } else if (method == "createWebrtcTransport") {
           // std::unique_ptr<rtc::SSLFingerprint> fingerprint =
           //       rtc::SSLFingerprint::CreateFromCertificate(*cert);
           //   if (modify_digest) {
@@ -563,7 +563,7 @@ int main(int, char**) {
           response["id"] = webrtc->id_;
 
           server_transport->Response(id, response);
-        } else if (method == "dtls") {
+        } else if (method == "connect") {
           std::string transportId = data["transportId"];
           auto t = session->transports[transportId];
 
@@ -578,7 +578,7 @@ int main(int, char**) {
           t->SetRemoteFingerprint(algorithm, value);
 
           server_transport->Response(id, response);
-        } else if (method == "subscribe") {
+        } else if (method == "consume") {
           std::string senderId = data["senderId"];
           std::string transportId = data["transportId"];
           std::string remoteTransportId = data["remoteTransportId"];
@@ -600,7 +600,7 @@ int main(int, char**) {
           response["id"] = receiver->id_;
 
           server_transport->Response(id, response);
-        } else if (method == "publish") {
+        } else if (method == "produce") {
           std::string transportId = data["transportId"];
           auto t = session->transports[transportId];
 
