@@ -6,12 +6,18 @@
 
 #include "rtc_base/ssl_fingerprint.h"
 
+#include "common/json_helper.h"
+
 void WebrtcTransportWrapper::InitModule(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(
       env, "WebrtcTransportWrapper",
       {
           InstanceMethod("Init", &WebrtcTransportWrapper::Init),
-          // InstanceMethod("SetCallback", &X11SourceWrapper::SetCallback),
+          InstanceMethod("CreateSender", &WebrtcTransportWrapper::CreateSender),
+          InstanceMethod("CreateReceiver",
+                         &WebrtcTransportWrapper::CreateReceiver),
+          InstanceMethod("SetRemoteFingerprint",
+                         &WebrtcTransportWrapper::SetRemoteFingerprint),
           InstanceMethod("Close", &WebrtcTransportWrapper::Close),
 
       });
@@ -67,35 +73,76 @@ Napi::Value WebrtcTransportWrapper::Init(const Napi::CallbackInfo& info) {
   dtlsParameters.Set("role", "server");
   dtlsParameters.Set("fingerprints", fingerprints);
 
-  // Napi::Object iceParameters = Napi::Object::New(env);
-  // iceParameters.Set("iceLite", true);
+  Napi::Object iceParameters = Napi::Object::New(env);
+  iceParameters.Set("iceLite", true);
+  iceParameters.Set("password", "sufhzdkdibm2u1nml7gmo29mbsvf7i07");
+  iceParameters.Set("usernameFragment", "vtucikb05exh1wax");
 
-  // iceParameters["iceLite"] = true;
-  // iceParameters["password"] = "sufhzdkdibm2u1nml7gmo29mbsvf7i07";
-  // iceParameters["usernameFragment"] = "vtucikb05exh1wax";
+  Napi::Array iceCandidates = Napi::Array::New(env, 1);
+  Napi::Object candidate = Napi::Object::New(env);
+  candidate.Set("component", 1);
+  candidate.Set("foundation", "udpcandidate");
+  candidate.Set("ip", internal_->ip_);
+  candidate.Set("port", internal_->port_);
+  candidate.Set("priority", "1076302079");
+  candidate.Set("protocol", "udp");
+  candidate.Set("type", "host");
 
-  // auto iceCandidates = json::array();
-  // auto candidate = json::object();
-
-  // candidate["component"] = 1;
-  // candidate["foundation"] = "udpcandidate";
-  // candidate["ip"] = ip;
-  // candidate["port"] = port;
-  // candidate["priority"] = "1076302079";
-  // candidate["protocol"] = "udp";
-  // candidate["type"] = "host";
-
-  // iceCandidates.push_back(candidate);
+  iceCandidates[0.] = candidate;
 
   response.Set("dtlsParameters", dtlsParameters);
-  // response["dtlsParameters"] = dtlsParameters;
-  // response["iceCandidates"] = iceCandidates;
-  // response["iceParameters"] = iceParameters;
-  // response["id"] = webrtc->id_;
-
-  // server_transport->Response(id, response);
+  response.Set("iceParameters", iceParameters);
+  response.Set("iceCandidates", iceCandidates);
 
   return response;
+}
+
+Napi::Value WebrtcTransportWrapper::SetRemoteFingerprint(
+    const Napi::CallbackInfo& info) {
+  // if (internal_) {
+  //   internal_->Init();
+  // }
+  std::string algorithm = info[0].ToString();
+  std::string value = info[1].ToString();
+
+  internal_->SetRemoteFingerprint(algorithm, value);
+
+  return info.Env().Undefined();
+}
+
+Napi::Value WebrtcTransportWrapper::CreateSender(
+    const Napi::CallbackInfo& info) {
+  std::string kind = info[0].ToString();
+  std::string rtp_parameter_str = info[1].ToString();
+  RtpParameters rtp_parameter = nlohmann::json::parse(rtp_parameter_str);
+  auto* sender = internal_->CreateSender(kind, rtp_parameter);
+  return Napi::String::New(info.Env(), sender->id_);
+}
+
+Napi::Value WebrtcTransportWrapper::CreateReceiver(
+    const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+
+  WebrtcTransportWrapper* remote_transport =
+      Napi::ObjectWrap<WebrtcTransportWrapper>::Unwrap(info[0].ToObject());
+
+  std::string senderId = info[1].ToString();
+
+  auto& sender = remote_transport->internal_->mapSender[senderId];
+
+  auto receiver =
+      internal_->CreateReceiver(sender->kind_, sender->rtp_parameter_);
+
+  remote_transport->internal_->AddReceiverToSender(senderId, receiver);
+
+  json rtpParameters = receiver->rtp_parameter_;
+
+  Napi::Object result = Napi::Object::New(env);
+
+  result.Set("id", receiver->id_);
+  result.Set("rtpParameters", rtpParameters.dump());
+
+  return result;
 }
 
 Napi::Value WebrtcTransportWrapper::Close(const Napi::CallbackInfo& info) {

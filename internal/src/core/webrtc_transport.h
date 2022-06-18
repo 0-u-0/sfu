@@ -52,6 +52,9 @@ class WebrtcTransport : public sigslot::has_slots<> {
 
   const std::string id_;
 
+  std::string ip_;
+  int port_;
+
   std::unique_ptr<rtc::Thread> thread_;
 
   std::string direction_;

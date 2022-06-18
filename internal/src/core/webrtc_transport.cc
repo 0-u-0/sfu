@@ -19,7 +19,7 @@ DEFINE_LOGGER(WebrtcTransport, "WebrtcTransport")
 WebrtcTransport::WebrtcTransport(const std::string& direction,
                                  const std::string& ip,
                                  const int port)
-    : id_(rtc::CreateRandomUuid()) {
+    : id_(rtc::CreateRandomUuid()), ip_(ip), port_(port) {
   direction_ = direction;
   thread_ = rtc::Thread::CreateWithSocketServer();
   thread_->Start();

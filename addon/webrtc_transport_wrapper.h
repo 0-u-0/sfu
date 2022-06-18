@@ -16,6 +16,9 @@ class WebrtcTransportWrapper : public Napi::ObjectWrap<WebrtcTransportWrapper> {
 
  private:
   Napi::Value Init(const Napi::CallbackInfo& info);
+  Napi::Value CreateSender(const Napi::CallbackInfo& info);
+  Napi::Value CreateReceiver(const Napi::CallbackInfo& info);
+  Napi::Value SetRemoteFingerprint(const Napi::CallbackInfo& info);
   Napi::Value Close(const Napi::CallbackInfo& info);
 };
 
