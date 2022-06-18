@@ -18,3 +18,15 @@ std::string MediaTypeToString(MediaType type) {
       return "";
   }
 }
+
+MediaType StringToMediaType(std::string& type) {
+  if (type == kMediaTypeVideo) {
+    return MediaType::VIDEO;
+  } else if (type == kMediaTypeAudio) {
+    return MediaType::AUDIO;
+  } else if (type == kMediaTypeData) {
+    return MediaType::DATA;
+  } else {
+    return MediaType::ANY;
+  }
+}

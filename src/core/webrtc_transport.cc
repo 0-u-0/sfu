@@ -14,8 +14,6 @@
 #include "core/receiver.h"
 #include "core/rtp_demuxer.h"
 
-using namespace cricket;
-
 DEFINE_LOGGER(WebrtcTransport, "WebrtcTransport")
 
 WebrtcTransport::WebrtcTransport(const std::string& direction,
@@ -99,10 +97,12 @@ void WebrtcTransport::SendPacket(webrtc::RtpPacketReceived& received_packet) {
 void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
   webrtc::RtpPacketReceived packet;
 
-  if (!packet.Parse(buffer))
+  if (!packet.Parse(buffer.cdata(), buffer.size()))
     return;
 
   packet.IdentifyExtensions(rtp_header_extensions_);
+  // TODO(CC):check type
+  packet.set_payload_type_frequency(webrtc::kVideoPayloadTypeFrequency);
 
   Sender* sender = rtp_demuxer_->ResolveSender(packet);
   if (sender != nullptr) {
@@ -128,8 +128,15 @@ bool WebrtcTransport::SetRemoteFingerprint(const std::string& algorithm,
 }
 
 // TODO(CC): move to network thread
-Sender* WebrtcTransport::CreateSender(RtpParameters& parameter) {
-  auto* sender = new Sender(parameter);
+Sender* WebrtcTransport::CreateSender(std::string& type,
+                                      RtpParameters& parameter) {
+  MediaType kind = StringToMediaType(type);
+  // TODO(CC): error
+  if (kind == MediaType::ANY) {
+    return nullptr;
+  }
+
+  auto* sender = new Sender(kind, parameter);
   this->mapSender[sender->id_] = sender;
   this->mapSenderReceiver[sender];
   sender->SignalReadPacket.connect(this, &WebrtcTransport::OnSenderPacket);
@@ -156,8 +163,9 @@ void WebrtcTransport::OnSenderPacket(Sender* sender,
   // SignalReadPacket(sender, packet);
 }
 
-Receiver* WebrtcTransport::CreateReceiver(RtpParameters& sender_parameter) {
-  auto receiver = new Receiver(sender_parameter);
+Receiver* WebrtcTransport::CreateReceiver(MediaType kind,
+                                          RtpParameters& sender_parameter) {
+  auto receiver = new Receiver(kind, sender_parameter);
   receiver->SignalReadPacket.connect(this, &WebrtcTransport::OnReceiverPacket);
   return receiver;
 }

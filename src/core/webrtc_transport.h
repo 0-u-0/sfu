@@ -44,10 +44,10 @@ class WebrtcTransport : public sigslot::has_slots<> {
   void OnReceiverPacket(Receiver*, webrtc::RtpPacketReceived&);
   sigslot::signal2<Sender*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
-  Sender* CreateSender(RtpParameters& parameter);
+  Sender* CreateSender(std::string& type, RtpParameters& parameter);
   Sender* GetSender(uint32_t, std::string, std::string);
 
-  Receiver* CreateReceiver(RtpParameters& sender_parameter);
+  Receiver* CreateReceiver(MediaType kind, RtpParameters& sender_parameter);
   void AddReceiverToSender(std::string senderId, Receiver* receiver);
 
   const std::string id_;

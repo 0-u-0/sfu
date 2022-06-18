@@ -587,7 +587,8 @@ int main(int, char**) {
           auto& sender = remoteTransport->mapSender[senderId];
 
           auto t = session->transports[transportId];
-          auto receiver = t->CreateReceiver(sender->rtp_parameter_);
+          auto receiver =
+              t->CreateReceiver(sender->kind_, sender->rtp_parameter_);
 
           remoteTransport->AddReceiverToSender(senderId, receiver);
 
@@ -605,8 +606,9 @@ int main(int, char**) {
 
           RtpParameters rtpParameters;
           data["rtpParameters"].get_to(rtpParameters);
+          std::string kind = data["kind"];
 
-          auto* sender = t->CreateSender(rtpParameters);
+          auto* sender = t->CreateSender(kind, rtpParameters);
 
           response["id"] = sender->id_;
           server_transport->Response(id, response);

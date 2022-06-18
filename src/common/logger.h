@@ -19,6 +19,46 @@ extern log4cxx::LoggerPtr globalLogger;
 // #define LOG_TRACE(fmt, args...) \
 //   LOG4CXX_TRACE_FMT(logger, fmt, ##args);
 
+#define LOG4CXX_DEBUG_FMT(logger, ...)                               \
+  do {                                                               \
+    if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {                \
+      logger->forcedLog(::log4cxx::Level::getDebug(),                \
+                        fmt::format(__VA_ARGS__), LOG4CXX_LOCATION); \
+    }                                                                \
+  } while (0)
+
+#define LOG4CXX_TRACE_FMT(logger, ...)                               \
+  do {                                                               \
+    if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {                \
+      logger->forcedLog(::log4cxx::Level::getTrace(),                \
+                        fmt::format(__VA_ARGS__), LOG4CXX_LOCATION); \
+    }                                                                \
+  } while (0)
+
+#define LOG4CXX_INFO_FMT(logger, ...)                                          \
+  do {                                                                         \
+    if (logger->isInfoEnabled()) {                                             \
+      logger->forcedLog(::log4cxx::Level::getInfo(), fmt::format(__VA_ARGS__), \
+                        LOG4CXX_LOCATION);                                     \
+    }                                                                          \
+  } while (0)
+
+#define LOG4CXX_WARN_FMT(logger, ...)                                          \
+  do {                                                                         \
+    if (logger->isWarnEnabled()) {                                             \
+      logger->forcedLog(::log4cxx::Level::getWarn(), fmt::format(__VA_ARGS__), \
+                        LOG4CXX_LOCATION);                                     \
+    }                                                                          \
+  } while (0)
+
+#define LOG4CXX_ERROR_FMT(logger, ...)                               \
+  do {                                                               \
+    if (logger->isErrorEnabled()) {                                  \
+      logger->forcedLog(::log4cxx::Level::getError(),                \
+                        fmt::format(__VA_ARGS__), LOG4CXX_LOCATION); \
+    }                                                                \
+  } while (0)
+
 #define DLOG(...) LOG4CXX_DEBUG_FMT(logger, __VA_ARGS__);
 #define ILOG(...) LOG4CXX_INFO_FMT(logger, __VA_ARGS__);
 #define WLOG(...) LOG4CXX_WARN_FMT(logger, __VA_ARGS__);
