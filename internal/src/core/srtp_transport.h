@@ -34,11 +34,14 @@ class SrtpTransport : public sigslot::has_slots<> {
   void OnRtpPacketReceived(rtc::CopyOnWriteBuffer packet,
                            int64_t packet_time_us);
 
+  void OnPacketReceived(rtc::CopyOnWriteBuffer packet, int64_t packet_time_us);
+
   void OnReadPacket(const char* data,
                     size_t len,
                     const int64_t packet_time_us,
                     int flags);
   bool UnprotectRtp(void* p, int in_len, int* out_len);
+  bool UnprotectRtcp(void* p, int in_len, int* out_len);
 
   void ResetParams();
   void CreateSrtpSessions();

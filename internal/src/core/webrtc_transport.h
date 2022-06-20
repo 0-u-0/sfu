@@ -37,6 +37,7 @@ class WebrtcTransport : public sigslot::has_slots<> {
                             const std::string& fingerprint);
 
   void OnPacket(rtc::CopyOnWriteBuffer& packet);
+  void HandleRtcp(rtc::ArrayView<const uint8_t> packet);
   void SendPacket(const char* data, size_t size, const int64_t timestamp);
   void SendPacket(webrtc::RtpPacketReceived& packet);
 

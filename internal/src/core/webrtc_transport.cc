@@ -6,7 +6,25 @@
 
 #include "api/transport/stun.h"
 #include "modules/rtp_rtcp/include/rtp_rtcp_defines.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/bye.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/common_header.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/extended_reports.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/fir.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/nack.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/pli.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/psfb.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/rapid_resync_request.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/receiver_report.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/rtpfb.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/sdes.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/sender_report.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/tmmbn.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/tmmbr.h"
+#include "modules/rtp_rtcp/source/rtcp_packet/transport_feedback.h"
+
 #include "modules/rtp_rtcp/source/rtp_packet_received.h"
+#include "modules/rtp_rtcp/source/rtp_util.h"
+
 #include "rtc_base/helpers.h"
 #include "rtc_base/task_utils/to_queued_task.h"
 
@@ -100,17 +118,130 @@ void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
   if (!packet.Parse(buffer.cdata(), buffer.size()))
     return;
 
-  packet.IdentifyExtensions(rtp_header_extensions_);
-  // TODO(CC):check type
-  packet.set_payload_type_frequency(webrtc::kVideoPayloadTypeFrequency);
+  if (webrtc::IsRtcpPacket(buffer)) {
+    ILOG("rtcp");
+    // TODO(CC): deal with rtcp
+    HandleRtcp(buffer);
+  } else if (webrtc::IsRtpPacket(buffer)) {
+    packet.IdentifyExtensions(rtp_header_extensions_);
+    // TODO(CC):check type
+    packet.set_payload_type_frequency(webrtc::kVideoPayloadTypeFrequency);
 
-  Sender* sender = rtp_demuxer_->ResolveSender(packet);
-  if (sender != nullptr) {
-    ILOG("found sender");
-    sender->OnRtpPacket(packet);
+    Sender* sender = rtp_demuxer_->ResolveSender(packet);
+    if (sender != nullptr) {
+      ILOG("found sender");
+      sender->OnRtpPacket(packet);
+    }
   }
 
   // RTC_LOG(INFO) << "packet: " << packet.Ssrc();
+}
+
+void WebrtcTransport::HandleRtcp(rtc::ArrayView<const uint8_t> packet) {
+  // https://github.com/versatica/mediasoup/blob/v3/doc/RTCP.md
+  webrtc::rtcp::CommonHeader rtcp_block;
+
+  size_t num_skipped_packets_ = 0;
+
+  // If a sender report is received but no DLRR, we need to reset the
+  // roundTripTime stat according to the standard, see
+  // https://www.w3.org/TR/webrtc-stats/#dom-rtcremoteoutboundrtpstreamstats-roundtriptime
+  struct RtcpReceivedBlock {
+    bool sender_report = false;
+    bool dlrr = false;
+  };
+  // For each remote SSRC we store if we've received a sender report or a DLRR
+  // block.
+  webrtc::flat_map<uint32_t, RtcpReceivedBlock> received_blocks;
+  for (const uint8_t* next_block = packet.begin(); next_block != packet.end();
+       next_block = rtcp_block.NextPacket()) {
+    ptrdiff_t remaining_blocks_size = packet.end() - next_block;
+    RTC_DCHECK_GT(remaining_blocks_size, 0);
+    if (!rtcp_block.Parse(next_block, remaining_blocks_size)) {
+      if (next_block == packet.begin()) {
+        // Failed to parse 1st header, nothing was extracted from this packet.
+        WLOG("Incoming invalid RTCP packet");
+        return;
+      }
+      ++num_skipped_packets_;
+      break;
+    }
+
+    // if (packet_type_counter_.first_packet_time_ms == -1)
+    //   packet_type_counter_.first_packet_time_ms =
+    //   clock_->TimeInMilliseconds();
+
+    switch (rtcp_block.type()) {
+      case webrtc::rtcp::SenderReport::kPacketType:
+        ILOG("rtcp::SenderReport");
+        // HandleSenderReport(rtcp_block, packet_information);
+        // received_blocks[packet_information->remote_ssrc].sender_report =
+        // true;
+        break;
+      case webrtc::rtcp::ReceiverReport::kPacketType:
+        // HandleReceiverReport(rtcp_block, packet_information);
+        break;
+      case webrtc::rtcp::Sdes::kPacketType:
+        // HandleSdes(rtcp_block, packet_information);
+        break;
+      case webrtc::rtcp::ExtendedReports::kPacketType: {
+        // bool contains_dlrr = false;
+        // uint32_t ssrc = 0;
+        // HandleXr(rtcp_block, packet_information, contains_dlrr, ssrc);
+        // if (contains_dlrr) {
+        //   received_blocks[ssrc].dlrr = true;
+        // }
+        break;
+      }
+      case webrtc::rtcp::Bye::kPacketType:
+        // HandleBye(rtcp_block);
+        break;
+      case webrtc::rtcp::App::kPacketType:
+        // HandleApp(rtcp_block, packet_information);
+        break;
+      case webrtc::rtcp::Rtpfb::kPacketType:
+        switch (rtcp_block.fmt()) {
+          case webrtc::rtcp::Nack::kFeedbackMessageType:
+            // HandleNack(rtcp_block, packet_information);
+            break;
+          case webrtc::rtcp::Tmmbr::kFeedbackMessageType:
+            // HandleTmmbr(rtcp_block, packet_information);
+            break;
+          case webrtc::rtcp::Tmmbn::kFeedbackMessageType:
+            // HandleTmmbn(rtcp_block, packet_information);
+            break;
+          case webrtc::rtcp::RapidResyncRequest::kFeedbackMessageType:
+            // HandleSrReq(rtcp_block, packet_information);
+            break;
+          case webrtc::rtcp::TransportFeedback::kFeedbackMessageType:
+            // HandleTransportFeedback(rtcp_block, packet_information);
+            break;
+          default:
+            ++num_skipped_packets_;
+            break;
+        }
+        break;
+      case webrtc::rtcp::Psfb::kPacketType:
+        switch (rtcp_block.fmt()) {
+          case webrtc::rtcp::Pli::kFeedbackMessageType:
+            // HandlePli(rtcp_block, packet_information);
+            break;
+          case webrtc::rtcp::Fir::kFeedbackMessageType:
+            // HandleFir/(rtcp_block, packet_information);
+            break;
+          case webrtc::rtcp::Psfb::kAfbMessageType:
+            // HandlePsfbApp(rtcp_block, packet_information);
+            break;
+          default:
+            ++num_skipped_packets_;
+            break;
+        }
+        break;
+      default:
+        ++num_skipped_packets_;
+        break;
+    }
+  }
 }
 
 bool WebrtcTransport::SetLocalCertificate(

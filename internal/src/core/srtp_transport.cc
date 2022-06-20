@@ -210,12 +210,48 @@ void SrtpTransport::OnReadPacket(const char* data,
 
   rtc::CopyOnWriteBuffer packet(data, len);
 
-  if (packet_type == cricket::RtpPacketType::kRtcp) {
-    // OnRtcpPacketReceived(std::move(packet), packet_time_us);
-    // TODO(CC): handle rtcp
-  } else {
-    OnRtpPacketReceived(std::move(packet), packet_time_us);
+  // if (packet_type == cricket::RtpPacketType::kRtcp) {
+  //   // OnRtcpPacketReceived(std::move(packet), packet_time_us);
+  // } else {
+  //   OnRtpPacketReceived(std::move(packet), packet_time_us);
+  // }
+
+  // TODO(CC): pass packet_type to next
+  OnPacketReceived(std::move(packet), packet_time_us);
+}
+
+void SrtpTransport::OnPacketReceived(rtc::CopyOnWriteBuffer packet,
+                                     int64_t packet_time_us) {
+  // if (!IsSrtpActive()) {
+  //   RTC_LOG(LS_WARNING)
+  //       << "Inactive SRTP transport received an RTP packet. Drop it.";
+  //   return;
+  // }
+  // TRACE_EVENT0("webrtc", "SRTP Decode");
+  char* data = packet.MutableData<char>();
+  int len = rtc::checked_cast<int>(packet.size());
+
+  if (webrtc::IsRtpPacket(packet)) {
+    if (!UnprotectRtp(data, len, &len)) {
+      RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << len
+                        << ", seqnum=" << webrtc::ParseRtpSequenceNumber(packet)
+                        << ", SSRC=" << webrtc::ParseRtpSsrc(packet)
+                        << ", previous failure count: "
+                        << decryption_failure_count_;
+      return;
+    }
+
+  } else if (webrtc::IsRtcpPacket(packet)) {
+    if (!UnprotectRtcp(data, len, &len)) {
+      RTC_LOG(LS_ERROR) << "Failed to unprotect RTcP packet: size=" << len;
+      return;
+    }
   }
+
+  packet.SetSize(len);
+  // DemuxPacket(std::move(packet), packet_time_us);
+
+  packet_callback_list_.Send(std::move(packet));
 }
 
 void SrtpTransport::OnRtpPacketReceived(rtc::CopyOnWriteBuffer packet,
@@ -314,4 +350,13 @@ bool SrtpTransport::UnprotectRtp(void* p, int in_len, int* out_len) {
   // }
   RTC_CHECK(recv_session_);
   return recv_session_->UnprotectRtp(p, in_len, out_len);
+}
+
+bool SrtpTransport::UnprotectRtcp(void* p, int in_len, int* out_len) {
+  // if (!IsSrtpActive()) {
+  //   RTC_LOG(LS_WARNING) << "Failed to UnprotectRtp: SRTP not active";
+  //   return false;
+  // }
+  RTC_CHECK(recv_session_);
+  return recv_session_->UnprotectRtcp(p, in_len, out_len);
 }

@@ -19,11 +19,3 @@ bool IsDtls(const char* data, size_t len) {
   // https://tools.ietf.org/html/draft-ietf-avtcore-rfc5764-mux-fixes
   return ((len >= 13) && (data[0] > 19 && data[0] < 64));
 }
-
-bool IsRtp(const char* data, size_t len) {
-  return false;
-}
-
-bool IsRtcp(const char* data, size_t len) {
-  return false;
-}
