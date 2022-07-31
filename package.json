@@ -11,7 +11,7 @@
   "scripts": {
     "configure": "cmake-js configure -D",
     "compile": "cmake-js compile -D",
-    "postinstall": "node install.js && cmake-js compile -D"
+    "postinstall": "cmake-js compile -D"
   },
   "repository": {
     "type": "git",

@@ -17,6 +17,7 @@ class RtpDemuxer {
   Sender* ResolveSenderByMid(const std::string& mid, uint32_t ssrc);
   void AddSsrcSinkBinding(uint32_t ssrc, Sender* sender);
 
+  // TODO(CC): better using std::unordered_map
   webrtc::flat_map<uint32_t, Sender*> sender_by_ssrc_;
   webrtc::flat_map<std::string, Sender*> sender_by_mid_;
   webrtc::flat_map<std::string, Sender*> sender_by_rid_;

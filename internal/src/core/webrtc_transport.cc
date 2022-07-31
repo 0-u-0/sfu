@@ -72,7 +72,7 @@ void WebrtcTransport::Init() {
     packet_callback_list_.AddReceiver(
         [this](rtc::CopyOnWriteBuffer packet) { OnPacket(packet); });
 
-    rtp_header_extensions_.RegisterByType(9, webrtc::kRtpExtensionMid);
+    rtp_header_extensions_.RegisterByType(4, webrtc::kRtpExtensionMid);
     rtp_header_extensions_.RegisterByType(10, webrtc::kRtpExtensionRtpStreamId);
     rtp_header_extensions_.RegisterByType(
         11, webrtc::kRtpExtensionRepairedRtpStreamId);
@@ -120,7 +120,6 @@ void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
 
   if (webrtc::IsRtcpPacket(buffer)) {
     ILOG("rtcp");
-    // TODO(CC): deal with rtcp
     HandleRtcp(buffer);
   } else if (webrtc::IsRtpPacket(buffer)) {
     packet.IdentifyExtensions(rtp_header_extensions_);

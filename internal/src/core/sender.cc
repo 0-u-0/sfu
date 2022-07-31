@@ -16,5 +16,13 @@ Sender::Sender(MediaType kind, RtpParameters& parameter)
 }
 
 void Sender::OnRtpPacket(webrtc::RtpPacketReceived& packet) {
+  /**
+   *   Producer::ReceiveRtpPacket
+   *
+   *   1. get or create  rtpStream by packet
+   *   2. send packet to rtpStream
+   *   3. using rtpStream:  nack, rtx, keyFrame
+   *   4. mangle packet, change payload, ssrc, etc.  (Producer::MangleRtpPacket)
+   */
   SignalReadPacket(this, packet);
 }

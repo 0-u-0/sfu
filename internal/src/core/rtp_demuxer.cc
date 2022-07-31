@@ -15,6 +15,8 @@ void RtpDemuxer::AddSender(Sender* sender) {
 }
 
 Sender* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
+  // FIXME: ssrc, mid, rid
+
   std::string packet_mid, packet_rsid;
   bool has_mid = packet.GetExtension<webrtc::RtpMid>(&packet_mid);
   bool has_rsid = packet.GetExtension<webrtc::RtpStreamId>(&packet_rsid);
@@ -30,8 +32,6 @@ Sender* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
     return sender;
   }
 
-  // We trust signaled SSRC more than payload type which is likely to conflict
-  // between streams.
   const auto ssrc_sink_it = sender_by_ssrc_.find(ssrc);
   if (ssrc_sink_it != sender_by_ssrc_.end()) {
     return ssrc_sink_it->second;

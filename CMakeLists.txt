@@ -4,7 +4,7 @@ project(sfu-addon)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(WEBRTC_SRC_PATH /Users/congchen/workspace/webrtc/src CACHE STRING "webrtc src path")
+set(WEBRTC_SRC_PATH "" CACHE STRING "webrtc src path")
 
 # set(WEBRTC_PACKAGE_PATH ${CMAKE_SOURCE_DIR}/third_party/webrtc-collect/package CACHE STRING "webrtc package path")
 # set(DISABLE_H264_DECODER "ON" CACHE STRING "disable h264 decoder")

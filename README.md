@@ -1,6 +1,10 @@
 
+# sfu
 
+A SFU server based on libwebrtc library.
 
-# Tidy
+## build
 
-run-clang-tidy.py -checks='google-*'  -p=build -quiet
+```
+npm run compile -- --CDWEBRTC_SRC_PATH="path_to_webrtc_source"
+```
