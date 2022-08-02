@@ -7,8 +7,9 @@
 #include "ortc/rtp_parameters.h"
 
 #include <any>
-#include <json.hpp>
 #include <map>
+
+#include "third_party/nlohmann/json.hpp"
 
 namespace nlohmann {
 

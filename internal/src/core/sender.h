@@ -1,13 +1,13 @@
 #ifndef SRC_SENDER_H_
 #define SRC_SENDER_H_
 
-#include <json.hpp>
-
 #include <modules/rtp_rtcp/source/rtp_packet_received.h>
 #include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include "core/media_types.h"
 #include "ortc/rtp_parameters.h"
+
+#include "third_party/nlohmann/json.hpp"
 
 using json = nlohmann::json;
 

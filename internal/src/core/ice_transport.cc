@@ -80,7 +80,7 @@ void IceTransport::OnPacket(const char* data,
     }
 
     if (stun_msg->type() == cricket::STUN_BINDING_REQUEST) {
-      ILOG("STUN_BINDING_REQUEST")
+      DLOG("STUN_BINDING_REQUEST")
 
       // Check for the presence of USERNAME and MESSAGE-INTEGRITY (if ICE)
       // first.

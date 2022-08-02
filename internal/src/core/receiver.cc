@@ -23,7 +23,7 @@ Receiver::Receiver(MediaType kind, RtpParameters& parameter)
 }
 
 void Receiver::OnSenderPacket(Sender*, webrtc::RtpPacketReceived& rtp_packet) {
-  ILOG("receiver on packet {} {}",
+  DLOG("receiver on packet {} {}",
        webrtc::CodecTypeToPayloadString(codec_type_),
        rtp_packet.payload_size());
 

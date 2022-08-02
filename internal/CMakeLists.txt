@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(dugon-sfu VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -13,6 +13,7 @@ endif()
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(LOG4 REQUIRED IMPORTED_TARGET liblog4cxx)
+pkg_check_modules(FMT REQUIRED IMPORTED_TARGET fmt)
 
 # variable
 set(WEBRTC_SRC_PATH "" CACHE STRING "webrtc path")
@@ -25,14 +26,12 @@ find_library(WEBRTC libwebrtc.a ${WEBRTC_SRC_PATH}/out/obj)
 
 file(GLOB_RECURSE SRC_FILES src/*.h, src/*.cc)
 
-add_subdirectory(deps/fmt)
-
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 set(COMMON_LIBRARIES
     ${WEBRTC}
     PkgConfig::LOG4
-    fmt::fmt
+    PkgConfig::FMT
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -68,7 +67,6 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     src
-    deps/json/single_include/nlohmann
     ${WEBRTC_SRC_PATH}
     ${WEBRTC_SRC_PATH}/third_party/abseil-cpp
 )

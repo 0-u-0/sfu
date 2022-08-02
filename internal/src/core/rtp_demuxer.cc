@@ -23,9 +23,9 @@ Sender* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
 
   uint32_t ssrc = packet.Ssrc();
 
-  ILOG("has_rsid: {}", has_rsid)
-  ILOG("has_mid: {}", has_mid)
-  ILOG("mid: {}", packet_mid)
+  DLOG("has_rsid: {}", has_rsid)
+  DLOG("has_mid: {}", has_mid)
+  DLOG("mid: {}", packet_mid)
 
   Sender* sender = ResolveSenderByMid(packet_mid, ssrc);
   if (sender != nullptr) {

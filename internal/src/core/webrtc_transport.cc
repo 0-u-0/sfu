@@ -128,7 +128,7 @@ void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
 
     Sender* sender = rtp_demuxer_->ResolveSender(packet);
     if (sender != nullptr) {
-      ILOG("found sender");
+      DLOG("found sender");
       sender->OnRtpPacket(packet);
     }
   }
@@ -282,7 +282,7 @@ Sender* WebrtcTransport::GetSender(uint32_t ssrc,
 
 void WebrtcTransport::OnSenderPacket(Sender* sender,
                                      webrtc::RtpPacketReceived& packet) {
-  ILOG("sender packet: {}", sender->id_);
+  DLOG("sender packet: {}", sender->id_);
 
   auto& receivers = this->mapSenderReceiver.at(sender);
 

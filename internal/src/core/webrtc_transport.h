@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include <json.hpp>
-
 #include "modules/rtp_rtcp/include/rtp_header_extension_map.h"
 #include "rtc_base/callback_list.h"
 #include "rtc_base/thread.h"
@@ -17,6 +15,8 @@
 #include "core/sender.h"
 #include "core/srtp_transport.h"
 #include "ortc/rtp_parameters.h"
+
+#include "third_party/nlohmann/json.hpp"
 
 using json = nlohmann::json;
 
