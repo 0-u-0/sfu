@@ -170,17 +170,22 @@ void WebrtcTransport::HandleRtcp(rtc::ArrayView<const uint8_t> packet) {
     //   packet_type_counter_.first_packet_time_ms =
     //   clock_->TimeInMilliseconds();
 
+    ILOG("rtcp type: {}", rtcp_block.type());
+
     switch (rtcp_block.type()) {
       case webrtc::rtcp::SenderReport::kPacketType:
-        ILOG("rtcp::SenderReport");
+        ILOG("rtcp type: SenderReport");
         // HandleSenderReport(rtcp_block, packet_information);
         // received_blocks[packet_information->remote_ssrc].sender_report =
         // true;
         break;
       case webrtc::rtcp::ReceiverReport::kPacketType:
+        ILOG("rtcp type: ReceiverReport");
         // HandleReceiverReport(rtcp_block, packet_information);
         break;
       case webrtc::rtcp::Sdes::kPacketType:
+        // nothing to do
+        DLOG("rtcp type: Sdes");
         // HandleSdes(rtcp_block, packet_information);
         break;
       case webrtc::rtcp::ExtendedReports::kPacketType: {
