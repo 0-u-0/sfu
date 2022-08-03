@@ -30,7 +30,7 @@ class UdpTransport : public sigslot::has_slots<> {
 
   sigslot::
       signal4<const char*, size_t, const rtc::SocketAddress&, const int64_t>
-          emit_packet_;
+          on_packet_;
 
   rtc::Thread* thread_;
   rtc::AsyncUDPSocket* rtp_socket_;

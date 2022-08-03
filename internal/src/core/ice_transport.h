@@ -28,15 +28,15 @@ class IceTransport : public sigslot::has_slots<> {
                  const rtc::PacketOptions& options,
                  int flags = 0);
 
-  void OnPacket(const char* data,
-                size_t size,
-                const rtc::SocketAddress& addr,
-                const int64_t timestamp);
+  void OnUdpPacket(const char* data,
+                   size_t size,
+                   const rtc::SocketAddress& addr,
+                   const int64_t timestamp);
 
   void SetState(IceTransportState state);
   bool writable() { return writable_; };
 
-  sigslot::signal3<const char*, size_t, const int64_t> emit_packet_;
+  sigslot::signal3<const char*, size_t, const int64_t> on_packet_;
   sigslot::signal1<IceTransportState> emit_state_;
 
   // variable

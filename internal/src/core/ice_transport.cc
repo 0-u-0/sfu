@@ -60,15 +60,15 @@ IceTransport::IceTransport(const std::string& ip, const int port) {
 }
 
 void IceTransport::Init() {
-  udp_transport_->emit_packet_.connect(this, &IceTransport::OnPacket);
+  udp_transport_->on_packet_.connect(this, &IceTransport::OnUdpPacket);
   udp_transport_->Init();
   SetState(IceTransportState::STATE_CONNECTING);
 }
 
-void IceTransport::OnPacket(const char* data,
-                            size_t size,
-                            const rtc::SocketAddress& addr,
-                            const int64_t timestamp) {
+void IceTransport::OnUdpPacket(const char* data,
+                               size_t size,
+                               const rtc::SocketAddress& addr,
+                               const int64_t timestamp) {
   if (IsStun(data, size)) {
     // Parse the request message.  If the packet is not a complete and correct
     // STUN message, then ignore it.
@@ -137,7 +137,9 @@ void IceTransport::OnPacket(const char* data,
     }
   } else {
     if (state_ == IceTransportState::STATE_COMPLETED) {
-      emit_packet_(data, size, timestamp);
+      on_packet_(data, size, timestamp);
+    } else {
+      // TODO(CC): maybe handle these packet?
     }
   }
 }

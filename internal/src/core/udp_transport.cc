@@ -30,7 +30,7 @@ void UdpTransport::OnPacket(rtc::AsyncPacketSocket* socket,
                             const rtc::SocketAddress& addr,
                             const int64_t& timestamp) {
   DLOG("Get data from {}", addr.ToString());
-  emit_packet_(data, size, addr, timestamp);
+  on_packet_(data, size, addr, timestamp);
 }
 
 void UdpTransport::SendPacket(const uint8_t* data, size_t size) {

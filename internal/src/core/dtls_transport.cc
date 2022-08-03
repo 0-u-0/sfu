@@ -118,7 +118,7 @@ DtlsTransport::DtlsTransport(IceTransport* ice_transport,
       ssl_max_version_(max_version) {}
 
 void DtlsTransport::Init(bool is_client) {
-  ice_transport_->emit_packet_.connect(this, &DtlsTransport::OnPacket);
+  ice_transport_->on_packet_.connect(this, &DtlsTransport::OnPacket);
   ice_transport_->emit_state_.connect(this,
                                       &DtlsTransport::OnIceTransportState);
   // ice_transport_->Init();
@@ -441,7 +441,7 @@ void DtlsTransport::OnPacket(const char* data,
 
         // Signal this upwards as a bypass packet.
         // TODO(CC):
-        emit_srtp_packet_(data, size, packet_time_us, cricket::PF_SRTP_BYPASS);
+        on_packet_(data, size, packet_time_us, cricket::PF_SRTP_BYPASS);
       }
       break;
     case DTLS_TRANSPORT_FAILED:

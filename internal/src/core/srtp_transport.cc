@@ -21,8 +21,7 @@ void SrtpTransport::SetDtlsTransport(DtlsTransport* dtls_transport) {
       this, [this](DtlsTransport* transport, const DtlsTransportState state) {
         OnDtlsState(transport, state);
       });
-  dtls_transport_->emit_srtp_packet_.connect(this,
-                                             &SrtpTransport::OnReadPacket);
+  dtls_transport_->on_packet_.connect(this, &SrtpTransport::OnReadPacket);
 }
 
 void SrtpTransport::SetupRtpDtlsSrtp() {
