@@ -9,14 +9,14 @@
 #include "core/producer.h"
 #include "seq_manager.h"
 
-class Receiver : public sigslot::has_slots<> {
+class Consumer : public sigslot::has_slots<> {
   DECLARE_LOGGER();
 
  public:
-  Receiver(MediaType kind, RtpParameters& parameter);
+  Consumer(MediaType kind, RtpParameters& parameter);
   void OnSenderPacket(Producer*, webrtc::RtpPacketReceived&);
 
-  sigslot::signal2<Receiver*, webrtc::RtpPacketReceived&> SignalReadPacket;
+  sigslot::signal2<Consumer*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
   const std::string id_;
   RtpParameters rtp_parameter_;

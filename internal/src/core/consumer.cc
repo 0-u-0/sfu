@@ -1,5 +1,5 @@
 
-#include "receiver.h"
+#include "core/consumer.h"
 
 #include "absl/types/optional.h"
 #include "api/video_codecs/video_codec.h"
@@ -7,9 +7,9 @@
 #include "modules/video_coding/packet_buffer.h"
 #include "rtc_base/helpers.h"
 
-DEFINE_LOGGER(Receiver, "Receiver");
+DEFINE_LOGGER(Consumer, "Consumer");
 
-Receiver::Receiver(MediaType kind, RtpParameters& parameter)
+Consumer::Consumer(MediaType kind, RtpParameters& parameter)
     : id_(rtc::CreateRandomUuid()) {
   kind_ = kind;
   rtp_parameter_ = parameter;
@@ -22,7 +22,7 @@ Receiver::Receiver(MediaType kind, RtpParameters& parameter)
   }
 }
 
-void Receiver::OnSenderPacket(Producer*,
+void Consumer::OnSenderPacket(Producer*,
                               webrtc::RtpPacketReceived& rtp_packet) {
   DLOG("receiver on packet {} {}",
        webrtc::CodecTypeToPayloadString(codec_type_),

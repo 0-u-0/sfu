@@ -29,7 +29,7 @@
 #include "rtc_base/task_utils/to_queued_task.h"
 
 #include "common/tools.h"
-#include "core/receiver.h"
+#include "core/consumer.h"
 #include "core/rtp_demuxer.h"
 
 DEFINE_LOGGER(WebrtcTransport, "WebrtcTransport")
@@ -298,14 +298,14 @@ void WebrtcTransport::OnSenderPacket(Producer* sender,
   // SignalReadPacket(sender, packet);
 }
 
-Receiver* WebrtcTransport::CreateReceiver(MediaType kind,
+Consumer* WebrtcTransport::CreateReceiver(MediaType kind,
                                           RtpParameters& sender_parameter) {
-  auto receiver = new Receiver(kind, sender_parameter);
+  auto receiver = new Consumer(kind, sender_parameter);
   receiver->SignalReadPacket.connect(this, &WebrtcTransport::OnReceiverPacket);
   return receiver;
 }
 
-void WebrtcTransport::OnReceiverPacket(Receiver* receiver,
+void WebrtcTransport::OnReceiverPacket(Consumer* receiver,
                                        webrtc::RtpPacketReceived& packet) {
   // RTC_LOG(INFO) << "receiver packet: ";
 
@@ -315,7 +315,7 @@ void WebrtcTransport::OnReceiverPacket(Receiver* receiver,
 }
 
 void WebrtcTransport::AddReceiverToSender(std::string senderId,
-                                          Receiver* receiver) {
+                                          Consumer* receiver) {
   ILOG("Add receiver {} to {}", receiver->id_, senderId);
 
   auto* sender = this->mapSender[senderId];

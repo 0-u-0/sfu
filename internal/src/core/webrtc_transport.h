@@ -8,10 +8,10 @@
 #include "rtc_base/thread.h"
 
 #include "common/logger.h"
+#include "core/consumer.h"
 #include "core/dtls_transport.h"
 #include "core/ice_transport.h"
 #include "core/producer.h"
-#include "core/receiver.h"
 #include "core/rtp_demuxer.h"
 #include "core/srtp_transport.h"
 #include "ortc/rtp_parameters.h"
@@ -42,14 +42,14 @@ class WebrtcTransport : public sigslot::has_slots<> {
   void SendPacket(webrtc::RtpPacketReceived& packet);
 
   void OnSenderPacket(Producer*, webrtc::RtpPacketReceived&);
-  void OnReceiverPacket(Receiver*, webrtc::RtpPacketReceived&);
+  void OnReceiverPacket(Consumer*, webrtc::RtpPacketReceived&);
   sigslot::signal2<Producer*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
   Producer* Produce(std::string& type, RtpParameters& parameter);
   Producer* GetProducer(uint32_t, std::string, std::string);
 
-  Receiver* CreateReceiver(MediaType kind, RtpParameters& sender_parameter);
-  void AddReceiverToSender(std::string senderId, Receiver* receiver);
+  Consumer* CreateReceiver(MediaType kind, RtpParameters& sender_parameter);
+  void AddReceiverToSender(std::string senderId, Consumer* receiver);
 
   const std::string id_;
 
@@ -69,7 +69,7 @@ class WebrtcTransport : public sigslot::has_slots<> {
   RtpDemuxer* rtp_demuxer_;
 
   std::unordered_map<std::string, Producer*> mapSender;
-  std::unordered_map<Producer*, std::unordered_set<Receiver*>>
+  std::unordered_map<Producer*, std::unordered_set<Consumer*>>
       mapSenderReceiver;
 };
 
