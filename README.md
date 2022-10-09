@@ -1,5 +1,7 @@
 
-# sfu
+# Octopus 
+
+sfu
 
 A SFU server based on libwebrtc library.
 
