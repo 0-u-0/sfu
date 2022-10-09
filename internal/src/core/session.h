@@ -9,7 +9,7 @@ class Session : public sigslot::has_slots<> {
                                          const std::string& ip,
                                          const int port);
 
-  void OnSenderPacket(Sender*, webrtc::RtpPacketReceived&);
+  void OnSenderPacket(Producer*, webrtc::RtpPacketReceived&);
 
   std::map<std::string, WebrtcTransport*> transports;
 };

@@ -3,18 +3,18 @@
 #include <cstddef>
 
 #include "common/logger.h"
+#include "core/producer.h"
 #include "modules/rtp_rtcp/source/rtp_header_extensions.h"
-#include "sender.h"
 
 DEFINE_LOGGER(RtpDemuxer, "RtpDemuxer");
 
-void RtpDemuxer::RemoveSender(Sender* sender) {}
+void RtpDemuxer::RemoveSender(Producer* sender) {}
 
-void RtpDemuxer::AddSender(Sender* sender) {
+void RtpDemuxer::AddSender(Producer* sender) {
   AddSsrcSinkBinding(sender->ssrc_, sender);
 }
 
-Sender* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
+Producer* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
   // FIXME: ssrc, mid, rid
 
   std::string packet_mid, packet_rsid;
@@ -27,7 +27,7 @@ Sender* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
   DLOG("has_mid: {}", has_mid)
   DLOG("mid: {}", packet_mid)
 
-  Sender* sender = ResolveSenderByMid(packet_mid, ssrc);
+  Producer* sender = ResolveSenderByMid(packet_mid, ssrc);
   if (sender != nullptr) {
     return sender;
   }
@@ -40,17 +40,18 @@ Sender* RtpDemuxer::ResolveSender(const webrtc::RtpPacketReceived& packet) {
   return nullptr;
 }
 
-Sender* RtpDemuxer::ResolveSenderByMid(const std::string& mid, uint32_t ssrc) {
+Producer* RtpDemuxer::ResolveSenderByMid(const std::string& mid,
+                                         uint32_t ssrc) {
   const auto it = sender_by_mid_.find(mid);
   if (it != sender_by_mid_.end()) {
-    Sender* sink = it->second;
+    Producer* sink = it->second;
     // AddSsrcSinkBinding(ssrc, sink);
     return sink;
   }
   return nullptr;
 }
 
-void RtpDemuxer::AddSsrcSinkBinding(uint32_t ssrc, Sender* sender) {
+void RtpDemuxer::AddSsrcSinkBinding(uint32_t ssrc, Producer* sender) {
   // if (sink_by_ssrc_.size() >= kMaxSsrcBindings) {
   //   RTC_LOG(LS_WARNING) << "New SSRC=" << ssrc
   //                       << " sink binding ignored; limit of" <<

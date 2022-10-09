@@ -10,7 +10,7 @@ WebrtcTransport* Session::CreateWebrtcTransport(const std::string& direction,
   return webrtc;
 }
 
-void Session::OnSenderPacket(Sender* sender,
+void Session::OnSenderPacket(Producer* sender,
                              webrtc::RtpPacketReceived& packet) {
   // RTC_LOG(INFO) << "session sender packet";
 }

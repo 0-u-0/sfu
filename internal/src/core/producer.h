@@ -11,9 +11,9 @@
 
 using json = nlohmann::json;
 
-class Sender : public sigslot::has_slots<> {
+class Producer : public sigslot::has_slots<> {
  public:
-  Sender(MediaType kind, RtpParameters& parameter);
+  Producer(MediaType kind, RtpParameters& parameter);
   const std::string id_;
 
   std::string mid_;
@@ -24,7 +24,7 @@ class Sender : public sigslot::has_slots<> {
 
   RtpParameters rtp_parameter_;
 
-  sigslot::signal2<Sender*, webrtc::RtpPacketReceived&> SignalReadPacket;
+  sigslot::signal2<Producer*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
   void OnRtpPacket(webrtc::RtpPacketReceived& packet);
 };

@@ -115,8 +115,8 @@ Napi::Value WebrtcTransportWrapper::CreateSender(
   std::string kind = info[0].ToString();
   std::string rtp_parameter_str = info[1].ToString();
   RtpParameters rtp_parameter = nlohmann::json::parse(rtp_parameter_str);
-  auto* sender = internal_->CreateSender(kind, rtp_parameter);
-  return Napi::String::New(info.Env(), sender->id_);
+  auto* producer = internal_->Produce(kind, rtp_parameter);
+  return Napi::String::New(info.Env(), producer->id_);
 }
 
 Napi::Value WebrtcTransportWrapper::CreateReceiver(

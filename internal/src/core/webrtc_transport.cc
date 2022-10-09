@@ -126,10 +126,10 @@ void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
     // TODO(CC):check type
     packet.set_payload_type_frequency(webrtc::kVideoPayloadTypeFrequency);
 
-    Sender* sender = rtp_demuxer_->ResolveSender(packet);
-    if (sender != nullptr) {
-      DLOG("found sender");
-      sender->OnRtpPacket(packet);
+    Producer* producer = rtp_demuxer_->ResolveSender(packet);
+    if (producer != nullptr) {
+      DLOG("found producer");
+      producer->OnRtpPacket(packet);
     }
   }
 
@@ -263,15 +263,15 @@ bool WebrtcTransport::SetRemoteFingerprint(const std::string& algorithm,
 }
 
 // TODO(CC): move to network thread
-Sender* WebrtcTransport::CreateSender(std::string& type,
-                                      RtpParameters& parameter) {
+Producer* WebrtcTransport::Produce(std::string& type,
+                                   RtpParameters& parameter) {
   MediaType kind = StringToMediaType(type);
   // TODO(CC): error
   if (kind == MediaType::ANY) {
     return nullptr;
   }
 
-  auto* sender = new Sender(kind, parameter);
+  auto* sender = new Producer(kind, parameter);
   this->mapSender[sender->id_] = sender;
   this->mapSenderReceiver[sender];
   sender->SignalReadPacket.connect(this, &WebrtcTransport::OnSenderPacket);
@@ -279,13 +279,13 @@ Sender* WebrtcTransport::CreateSender(std::string& type,
   return sender;
 }
 
-Sender* WebrtcTransport::GetSender(uint32_t ssrc,
-                                   std::string mid,
-                                   std::string rid) {
+Producer* WebrtcTransport::GetProducer(uint32_t ssrc,
+                                       std::string mid,
+                                       std::string rid) {
   return nullptr;
 }
 
-void WebrtcTransport::OnSenderPacket(Sender* sender,
+void WebrtcTransport::OnSenderPacket(Producer* sender,
                                      webrtc::RtpPacketReceived& packet) {
   DLOG("sender packet: {}", sender->id_);
 

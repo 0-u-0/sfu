@@ -5,22 +5,22 @@
 #include <rtc_base/containers/flat_map.h>
 
 #include "common/logger.h"
-#include "sender.h"
+#include "core/producer.h"
 
 class RtpDemuxer {
   DECLARE_LOGGER();
 
  public:
-  void AddSender(Sender* sender);
-  void RemoveSender(Sender* sender);
-  Sender* ResolveSender(const webrtc::RtpPacketReceived& packet);
-  Sender* ResolveSenderByMid(const std::string& mid, uint32_t ssrc);
-  void AddSsrcSinkBinding(uint32_t ssrc, Sender* sender);
+  void AddSender(Producer* sender);
+  void RemoveSender(Producer* sender);
+  Producer* ResolveSender(const webrtc::RtpPacketReceived& packet);
+  Producer* ResolveSenderByMid(const std::string& mid, uint32_t ssrc);
+  void AddSsrcSinkBinding(uint32_t ssrc, Producer* sender);
 
   // TODO(CC): better using std::unordered_map
-  webrtc::flat_map<uint32_t, Sender*> sender_by_ssrc_;
-  webrtc::flat_map<std::string, Sender*> sender_by_mid_;
-  webrtc::flat_map<std::string, Sender*> sender_by_rid_;
+  webrtc::flat_map<uint32_t, Producer*> sender_by_ssrc_;
+  webrtc::flat_map<std::string, Producer*> sender_by_mid_;
+  webrtc::flat_map<std::string, Producer*> sender_by_rid_;
 };
 
 #endif /* SRC_RTP_DEMUXER_H_ */

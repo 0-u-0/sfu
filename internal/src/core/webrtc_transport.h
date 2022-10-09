@@ -10,9 +10,9 @@
 #include "common/logger.h"
 #include "core/dtls_transport.h"
 #include "core/ice_transport.h"
+#include "core/producer.h"
 #include "core/receiver.h"
 #include "core/rtp_demuxer.h"
-#include "core/sender.h"
 #include "core/srtp_transport.h"
 #include "ortc/rtp_parameters.h"
 
@@ -41,12 +41,12 @@ class WebrtcTransport : public sigslot::has_slots<> {
   void SendPacket(const char* data, size_t size, const int64_t timestamp);
   void SendPacket(webrtc::RtpPacketReceived& packet);
 
-  void OnSenderPacket(Sender*, webrtc::RtpPacketReceived&);
+  void OnSenderPacket(Producer*, webrtc::RtpPacketReceived&);
   void OnReceiverPacket(Receiver*, webrtc::RtpPacketReceived&);
-  sigslot::signal2<Sender*, webrtc::RtpPacketReceived&> SignalReadPacket;
+  sigslot::signal2<Producer*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
-  Sender* CreateSender(std::string& type, RtpParameters& parameter);
-  Sender* GetSender(uint32_t, std::string, std::string);
+  Producer* Produce(std::string& type, RtpParameters& parameter);
+  Producer* GetProducer(uint32_t, std::string, std::string);
 
   Receiver* CreateReceiver(MediaType kind, RtpParameters& sender_parameter);
   void AddReceiverToSender(std::string senderId, Receiver* receiver);
@@ -68,8 +68,9 @@ class WebrtcTransport : public sigslot::has_slots<> {
   webrtc::RtpHeaderExtensionMap rtp_header_extensions_;
   RtpDemuxer* rtp_demuxer_;
 
-  std::unordered_map<std::string, Sender*> mapSender;
-  std::unordered_map<Sender*, std::unordered_set<Receiver*>> mapSenderReceiver;
+  std::unordered_map<std::string, Producer*> mapSender;
+  std::unordered_map<Producer*, std::unordered_set<Receiver*>>
+      mapSenderReceiver;
 };
 
 #endif /* SRC_WEBRTC_TRANSPORT_H_ */

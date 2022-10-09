@@ -1,10 +1,10 @@
 
-#include "core/sender.h"
+#include "core/producer.h"
 
 #include <rtc_base/helpers.h>
 
 // TODO(CC): move codec parse to A class
-Sender::Sender(MediaType kind, RtpParameters& parameter)
+Producer::Producer(MediaType kind, RtpParameters& parameter)
     : id_(rtc::CreateRandomUuid()) {
   kind_ = kind;
   rtp_parameter_ = parameter;
@@ -15,7 +15,7 @@ Sender::Sender(MediaType kind, RtpParameters& parameter)
   // }
 }
 
-void Sender::OnRtpPacket(webrtc::RtpPacketReceived& packet) {
+void Producer::OnRtpPacket(webrtc::RtpPacketReceived& packet) {
   /**
    *   Producer::ReceiveRtpPacket
    *

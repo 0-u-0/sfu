@@ -6,7 +6,7 @@
 #include "modules/rtp_rtcp/source/video_rtp_depacketizer.h"
 
 #include "common/logger.h"
-#include "sender.h"
+#include "core/producer.h"
 #include "seq_manager.h"
 
 class Receiver : public sigslot::has_slots<> {
@@ -14,7 +14,7 @@ class Receiver : public sigslot::has_slots<> {
 
  public:
   Receiver(MediaType kind, RtpParameters& parameter);
-  void OnSenderPacket(Sender*, webrtc::RtpPacketReceived&);
+  void OnSenderPacket(Producer*, webrtc::RtpPacketReceived&);
 
   sigslot::signal2<Receiver*, webrtc::RtpPacketReceived&> SignalReadPacket;
 
