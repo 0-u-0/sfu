@@ -43,25 +43,39 @@ void NewUdpTransport::SetRemoteAddress(const std::string& ip, int port) {
   });
 }
 
+void NewUdpTransport::SetRemoteAddress(
+    const rtc::SocketAddress& remote_address) {
+  thread_->Invoke<void>(RTC_FROM_HERE, [this, remote_address]() {
+    remote_address_ = remote_address;
+  });
+}
+
 void NewUdpTransport::OnPacket(rtc::AsyncPacketSocket* socket,
                                const char* data,
                                size_t size,
                                const rtc::SocketAddress& addr,
                                const int64_t& timestamp) {
-  data_callback_list_.Send(data, size, addr);
+  data_callback_list_.Send(data, size, addr, timestamp);
 }
 
 void NewUdpTransport::Send(const uint8_t* data, size_t size) {
+  SendTo(data, size, remote_address_);
+}
+
+void NewUdpTransport::SendTo(const uint8_t* data,
+                             size_t size,
+                             const rtc::SocketAddress& addr) {
   auto packet = rtc::CopyOnWriteBuffer(data, size);
 
-  thread_->PostTask(ToQueuedTask([this, packet_copy = std::move(packet)]() {
-    if (!remote_address_.IsNil() && socket_ != nullptr) {
-      if (!socket_->SendTo(packet_copy.data(), packet_copy.size(),
-                           remote_address_, rtc::PacketOptions())) {
-        // LOG_WARN("Send failed");
-      }
-    }
-  }));
+  thread_->PostTask(
+      ToQueuedTask([this, packet_copy = std::move(packet), addr]() {
+        if (!addr.IsNil() && socket_ != nullptr) {
+          if (!socket_->SendTo(packet_copy.data(), packet_copy.size(), addr,
+                               rtc::PacketOptions())) {
+            // LOG_WARN("Send failed");
+          }
+        }
+      }));
 }
 
 void NewUdpTransport::Close() {

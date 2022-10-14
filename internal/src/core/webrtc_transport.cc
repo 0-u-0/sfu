@@ -39,7 +39,7 @@ WebrtcTransport::WebrtcTransport(const std::string& direction,
                                  const int port)
     : id_(rtc::CreateRandomUuid()), ip_(ip), port_(port) {
   direction_ = direction;
-  thread_ = rtc::Thread::CreateWithSocketServer();
+  thread_ = rtc::Thread::Create();
   thread_->Start();
 
   ice_transport_ = thread_->Invoke<IceTransport*>(

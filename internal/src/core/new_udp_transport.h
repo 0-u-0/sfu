@@ -20,8 +20,10 @@ class NewUdpTransport : public sigslot::has_slots<> {
   bool Init();
 
   void SetRemoteAddress(const std::string& ip, const int port);
+  void SetRemoteAddress(const rtc::SocketAddress& remote_address);
 
   void Send(const uint8_t* data, size_t size);
+  void SendTo(const uint8_t* data, size_t size, const rtc::SocketAddress& addr);
 
   void OnPacket(rtc::AsyncPacketSocket* socket,
                 const char* data,
@@ -32,7 +34,10 @@ class NewUdpTransport : public sigslot::has_slots<> {
 
   int GetLocalPort();
 
-  webrtc::CallbackList<const char*, size_t, const rtc::SocketAddress&>
+  webrtc::CallbackList<const char*,
+                       size_t,
+                       const rtc::SocketAddress&,
+                       const int64_t&>
       data_callback_list_;
   rtc::AsyncUDPSocket* socket_ = nullptr;
 

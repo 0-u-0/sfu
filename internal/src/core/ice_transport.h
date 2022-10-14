@@ -5,6 +5,8 @@
 
 #include "core/udp_transport.h"
 
+#include "core/new_udp_transport.h"
+
 #include "common/logger.h"
 
 enum class IceTransportState {
@@ -42,7 +44,11 @@ class IceTransport : public sigslot::has_slots<> {
   // variable
   std::string local_ufrag_;
   std::string local_password_;
-  UdpTransport* udp_transport_;
+  rtc::Thread* thread_;
+
+  webrtc::NewUdpTransport* udp_transport_;
+  // UdpTransport* udp_transport_;
+
   IceTransportState state_ = IceTransportState::STATE_INIT;
   bool writable_ = false;
 };

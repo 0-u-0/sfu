@@ -1,9 +1,13 @@
 
 #include "core/ice_transport.h"
 
-#include "api/transport/stun.h"
-#include "common/logger.h"
+#include <api/transport/stun.h>
+#include <rtc_base/copy_on_write_buffer.h>
+#include <rtc_base/task_utils/to_queued_task.h>
 
+#include "core/socket_pool.h"
+
+#include "common/logger.h"
 #include "common/tools.h"
 
 DEFINE_LOGGER(IceTransport, "IceTransport");
@@ -53,14 +57,22 @@ void GetStunBindResponse(cricket::StunMessage* request,
 }
 
 IceTransport::IceTransport(const std::string& ip, const int port) {
-  udp_transport_ = new UdpTransport(ip, port);
+  webrtc::SocketPool::Init();
+
+  thread_ = rtc::Thread::Current();
+  udp_transport_ = webrtc::SocketPool::AllocateUdp(ip, port);
 
   local_ufrag_ = "vtucikb05exh1wax";
   local_password_ = "sufhzdkdibm2u1nml7gmo29mbsvf7i07";
 }
 
 void IceTransport::Init() {
-  udp_transport_->on_packet_.connect(this, &IceTransport::OnUdpPacket);
+  // udp_transport_->on_packet_.connect(this, &IceTransport::OnUdpPacket);
+  udp_transport_->data_callback_list_.AddReceiver(
+      [this](const char* data, size_t size, const rtc::SocketAddress& addr,
+             const int64_t& timestamp) {
+        OnUdpPacket(data, size, addr, timestamp);
+      });
   udp_transport_->Init();
   SetState(IceTransportState::STATE_CONNECTING);
 }
@@ -69,6 +81,18 @@ void IceTransport::OnUdpPacket(const char* data,
                                size_t size,
                                const rtc::SocketAddress& addr,
                                const int64_t timestamp) {
+  // from network thread
+  if (thread_ != rtc::Thread::Current()) {
+    auto packet = rtc::CopyOnWriteBuffer(data, size);
+
+    thread_->PostTask(webrtc::ToQueuedTask(
+        [this, packet_copy = std::move(packet), addr, timestamp]() {
+          OnUdpPacket((const char*)packet_copy.data(), packet_copy.size(), addr,
+                      timestamp);
+        }));
+    return;
+  }
+
   if (IsStun(data, size)) {
     // Parse the request message.  If the packet is not a complete and correct
     // STUN message, then ignore it.
@@ -149,7 +173,7 @@ int IceTransport::SendPacket(const char* data,
                              const rtc::PacketOptions& options,
                              int flags) {
   ILOG("SendPacket");
-  this->udp_transport_->SendPacket(reinterpret_cast<const uint8_t*>(data), len);
+  this->udp_transport_->Send(reinterpret_cast<const uint8_t*>(data), len);
   return 0;
 }
 

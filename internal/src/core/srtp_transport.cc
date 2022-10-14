@@ -324,8 +324,8 @@ bool SrtpTransport::SendRtpPacket(const char* data2,
   // Update the length of the packet now that we've added the auth tag.
   packet.SetSize(len);
 
-  dtls_transport_->ice_transport_->udp_transport_->SendPacket(packet.data(),
-                                                              packet.size());
+  dtls_transport_->ice_transport_->udp_transport_->Send(packet.data(),
+                                                        packet.size());
   return true;
 }
 
