@@ -4,22 +4,29 @@
 #include <atomic>
 #include <mutex>
 
-#include "core/new_udp_transport.h"
 #include "rtc_base/thread.h"
+
+#include "common/logger.h"
+#include "core/new_udp_transport.h"
 
 namespace webrtc {
 class SocketPool {
  public:
+  DECLARE_LOGGER();
+
   //  rtc::Thread* thread_;
   static void Init();
   static void Unint();
+
   static NewUdpTransport* AllocateUdp(const std::string& ip, int port);
 
-  static std::vector<std::unique_ptr<rtc::Thread>> thread_pool_;
-  static int pool_size_;
-  static int current_index_;
+  static SocketPool* pool_;
+
   static std::mutex udp_mutex_;
-  static std::atomic_bool inited_;
+
+  std::vector<std::unique_ptr<rtc::Thread>> thread_pool_;
+  int pool_size_ = 0;
+  int current_index_ = 0;
 };
 }  // namespace webrtc
 

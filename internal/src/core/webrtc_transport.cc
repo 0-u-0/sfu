@@ -119,7 +119,7 @@ void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
     return;
 
   if (webrtc::IsRtcpPacket(buffer)) {
-    ILOG("rtcp");
+    DLOG("rtcp");
     HandleRtcp(buffer);
   } else if (webrtc::IsRtpPacket(buffer)) {
     packet.IdentifyExtensions(rtp_header_extensions_);
@@ -185,7 +185,7 @@ void WebrtcTransport::HandleRtcp(rtc::ArrayView<const uint8_t> packet) {
         break;
       case webrtc::rtcp::Sdes::kPacketType:
         // nothing to do
-        DLOG("rtcp type: Sdes");
+        ILOG("rtcp type: Sdes");
         // HandleSdes(rtcp_block, packet_information);
         break;
       case webrtc::rtcp::ExtendedReports::kPacketType: {
