@@ -18,7 +18,7 @@ class SocketPool {
   static void Init();
   static void Unint();
 
-  static NewUdpTransport* AllocateUdp(const std::string& ip, int port);
+  static UdpTransport* AllocateUdp(const std::string& ip, int port);
 
   static SocketPool* pool_;
 

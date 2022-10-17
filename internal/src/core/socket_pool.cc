@@ -43,7 +43,7 @@ void SocketPool::Init() {
 
 void SocketPool::Unint() {}
 
-NewUdpTransport* SocketPool::AllocateUdp(const std::string& ip, int port) {
+UdpTransport* SocketPool::AllocateUdp(const std::string& ip, int port) {
   rtc::Thread* current_thread;
 
   {
@@ -62,10 +62,9 @@ NewUdpTransport* SocketPool::AllocateUdp(const std::string& ip, int port) {
     }
   }
 
-  webrtc::NewUdpTransport* udp =
-      current_thread->Invoke<webrtc::NewUdpTransport*>(
-          RTC_FROM_HERE,
-          [ip, port]() { return new webrtc::NewUdpTransport(ip, port); });
+  webrtc::UdpTransport* udp = current_thread->Invoke<webrtc::UdpTransport*>(
+      RTC_FROM_HERE,
+      [ip, port]() { return new webrtc::UdpTransport(ip, port); });
   return udp;
 }
 

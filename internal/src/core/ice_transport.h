@@ -46,7 +46,7 @@ class IceTransport : public sigslot::has_slots<> {
   std::string local_password_;
   rtc::Thread* thread_;
 
-  webrtc::NewUdpTransport* udp_transport_;
+  webrtc::UdpTransport* udp_transport_;
   // UdpTransport* udp_transport_;
 
   IceTransportState state_ = IceTransportState::STATE_INIT;

@@ -1,6 +1,6 @@
 
-#ifndef SRC_CORE_NEW_UDP_TRANSPORT_H_
-#define SRC_CORE_NEW_UDP_TRANSPORT_H_
+#ifndef SRC_CORE_UDP_TRANSPORT_H_
+#define SRC_CORE_UDP_TRANSPORT_H_
 
 #include <rtc_base/async_udp_socket.h>
 #include <rtc_base/callback_list.h>
@@ -10,12 +10,12 @@
 
 namespace webrtc {
 
-class NewUdpTransport : public sigslot::has_slots<> {
+class UdpTransport : public sigslot::has_slots<> {
   DECLARE_LOGGER();
 
  public:
-  NewUdpTransport(const std::string& ip, int port);
-  ~NewUdpTransport();
+  UdpTransport(const std::string& ip, int port);
+  ~UdpTransport();
 
   bool Init();
 
@@ -51,4 +51,4 @@ class NewUdpTransport : public sigslot::has_slots<> {
 };
 }  // namespace webrtc
 
-#endif /* SRC_CORE_NEW_UDP_TRANSPORT_H_ */
+#endif /* SRC_CORE_UDP_TRANSPORT_H_ */
