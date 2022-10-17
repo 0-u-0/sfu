@@ -182,7 +182,7 @@ void DtlsTransport::MaybeStartDtls() {
   if (dtls_ && ice_transport_->writable()) {
     ConfigureHandshakeTimeout();
 
-    if (dtls_->StartSSL()) {
+    if (dtls_->StartSSL() != 0) {
       // This should never fail:
       // Because we are operating in a nonblocking mode and all
       // incoming packets come in via OnReadPacket(), which rejects

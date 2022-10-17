@@ -61,7 +61,7 @@ IceTransport::IceTransport(const std::string& ip, const int port) {
 
   thread_ = rtc::Thread::Current();
   udp_transport_ = webrtc::SocketPool::AllocateUdp(ip, port);
-
+  // TODO(CC): make ufrag & password random
   local_ufrag_ = "vtucikb05exh1wax";
   local_password_ = "sufhzdkdibm2u1nml7gmo29mbsvf7i07";
 }
