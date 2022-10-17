@@ -4,7 +4,6 @@
 #include <iostream>
 #include <thread>
 
-#include "core/new_udp_transport.h"
 #include "rtc_base/thread.h"
 
 namespace webrtc {

@@ -7,7 +7,7 @@
 #include "rtc_base/thread.h"
 
 #include "common/logger.h"
-#include "core/new_udp_transport.h"
+#include "core/udp_transport.h"
 
 namespace webrtc {
 class SocketPool {
