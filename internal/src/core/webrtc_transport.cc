@@ -271,12 +271,12 @@ Producer* WebrtcTransport::Produce(std::string& type,
     return nullptr;
   }
 
-  auto* sender = new Producer(kind, parameter);
-  this->mapSender[sender->id_] = sender;
-  this->mapSenderReceiver[sender];
-  sender->SignalReadPacket.connect(this, &WebrtcTransport::OnSenderPacket);
-  rtp_demuxer_->AddSender(sender);
-  return sender;
+  auto* producer = new Producer(kind, parameter);
+  this->mapSender[producer->id_] = producer;
+  this->mapSenderReceiver[producer];
+  producer->SignalReadPacket.connect(this, &WebrtcTransport::OnSenderPacket);
+  rtp_demuxer_->AddSender(producer);
+  return producer;
 }
 
 Producer* WebrtcTransport::GetProducer(uint32_t ssrc,
