@@ -3,6 +3,8 @@
 
 #include <rtc_base/helpers.h>
 
+DEFINE_LOGGER(Producer, "Producer");
+
 // TODO(CC): move codec parse to A class
 Producer::Producer(MediaType kind, RtpParameters& parameter)
     : id_(rtc::CreateRandomUuid()) {
@@ -25,4 +27,8 @@ void Producer::OnRtpPacket(webrtc::RtpPacketReceived& packet) {
    *   4. mangle packet, change payload, ssrc, etc.  (Producer::MangleRtpPacket)
    */
   SignalReadPacket(this, packet);
+}
+
+void Producer::HandleSenderReport(webrtc::rtcp::SenderReport& sender_report) {
+  ILOG("HandleSenderReport");
 }

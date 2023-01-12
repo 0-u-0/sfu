@@ -15,6 +15,8 @@ class RtpDemuxer {
   void RemoveSender(Producer* sender);
   Producer* ResolveSender(const webrtc::RtpPacketReceived& packet);
   Producer* ResolveSenderByMid(const std::string& mid, uint32_t ssrc);
+  Producer* ResolveSenderBySsrc(uint32_t ssrc);
+
   void AddSsrcSinkBinding(uint32_t ssrc, Producer* sender);
 
   // TODO(CC): better using std::unordered_map

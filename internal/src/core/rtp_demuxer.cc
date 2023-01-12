@@ -45,7 +45,16 @@ Producer* RtpDemuxer::ResolveSenderByMid(const std::string& mid,
   const auto it = sender_by_mid_.find(mid);
   if (it != sender_by_mid_.end()) {
     Producer* sink = it->second;
-    // AddSsrcSinkBinding(ssrc, sink);
+    AddSsrcSinkBinding(ssrc, sink);
+    return sink;
+  }
+  return nullptr;
+}
+
+Producer* RtpDemuxer::ResolveSenderBySsrc(uint32_t ssrc) {
+  const auto it = sender_by_ssrc_.find(ssrc);
+  if (it != sender_by_ssrc_.end()) {
+    Producer* sink = it->second;
     return sink;
   }
   return nullptr;

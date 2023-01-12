@@ -136,6 +136,7 @@ void WebrtcTransport::OnPacket(rtc::CopyOnWriteBuffer& buffer) {
   // RTC_LOG(INFO) << "packet: " << packet.Ssrc();
 }
 
+// for loop all rtcp packet
 void WebrtcTransport::HandleRtcp(rtc::ArrayView<const uint8_t> packet) {
   // https://github.com/versatica/mediasoup/blob/v3/doc/RTCP.md
   webrtc::rtcp::CommonHeader rtcp_block;
@@ -173,16 +174,56 @@ void WebrtcTransport::HandleRtcp(rtc::ArrayView<const uint8_t> packet) {
     ILOG("rtcp type: {}", rtcp_block.type());
 
     switch (rtcp_block.type()) {
-      case webrtc::rtcp::SenderReport::kPacketType:
+      case webrtc::rtcp::SenderReport::kPacketType: {
         ILOG("rtcp type: SenderReport");
+
+        webrtc::rtcp::SenderReport sender_report;
+        if (!sender_report.Parse(rtcp_block)) {
+          WLOG("rtcp type: SenderReport");
+          return;
+        }
+
+        const uint32_t remote_ssrc = sender_report.sender_ssrc();
+        // sender_report.
+        ILOG("rtcp type: SenderReport {} {}", remote_ssrc,
+             sender_report.report_blocks().size());
+
+        Producer* producer = rtp_demuxer_->ResolveSenderBySsrc(remote_ssrc);
+        producer->HandleSenderReport(sender_report);
+        // for (const webrtc::rtcp::ReportBlock& report_block :
+        //      sender_report.report_blocks()) {
+        //   ILOG("SR {} {}", remote_ssrc, report_block.source_ssrc());
+        // }
+
         // HandleSenderReport(rtcp_block, packet_information);
         // received_blocks[packet_information->remote_ssrc].sender_report =
         // true;
         break;
-      case webrtc::rtcp::ReceiverReport::kPacketType:
+      }
+      case webrtc::rtcp::ReceiverReport::kPacketType: {
+        return;
         ILOG("rtcp type: ReceiverReport");
+
+        webrtc::rtcp::ReceiverReport receiver_report;
+        if (!receiver_report.Parse(rtcp_block)) {
+          WLOG("rtcp type: ReceiverReport");
+
+          return;
+        }
+
+        const uint32_t remote_ssrc = receiver_report.sender_ssrc();
+
+        for (const webrtc::rtcp::ReportBlock& report_block :
+             receiver_report.report_blocks()) {
+          ILOG("RR {} {}", remote_ssrc, report_block.source_ssrc());
+        }
+        // HandleReportBlock(report_block, packet_information, remote_ssrc);
+
         // HandleReceiverReport(rtcp_block, packet_information);
+
+        // TODO: we also should sender rr to tccClient
         break;
+      }
       case webrtc::rtcp::Sdes::kPacketType:
         // nothing to do
         ILOG("rtcp type: Sdes");
